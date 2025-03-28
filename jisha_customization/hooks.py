@@ -125,13 +125,11 @@ doctype_js = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Stock Entry": {
+		"before_save": "jisha_customization.jisha_customization.override.stock_entry.before_save",
+    }
+}
 
 # Scheduled Tasks
 # ---------------
@@ -230,3 +228,16 @@ doctype_js = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+fixtures = [
+	{"dt":"Custom Field","filters":[["name","in",(
+        "BOM-custom_additional_cost_configuration","BOM-custom_additonal_costs"
+	)]]
+
+	},
+    {"dt":"Property Setter","filters":[["name","in",(
+		"Landed Cost Taxes and Charges-amount-description"
+	)]]
+
+	}
+
+]
