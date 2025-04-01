@@ -4,7 +4,7 @@ frappe.ui.form.on('BOM', {
             return {
                 filters: {
                     company: frm.doc.company,
-                    account_type: ["in", ["Tax","Chargeable","Income Account","Expenses Included In Valuation","Expenses Included In Asset Valuation"]]
+                    account_type: ["in", ["Tax","Chargeable","Income Account","Expenses Included In Valuation","Expenses Included In Asset Valuation","Direct Expense","Expense Account","Indirect Expense"]]
                 }
             }
         })
