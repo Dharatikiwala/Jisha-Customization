@@ -231,7 +231,7 @@ doc_events = {
 
 fixtures = [
 	{"dt":"Custom Field","filters":[["name","in",(
-        "BOM-custom_additional_cost_configuration","BOM-custom_additonal_costs"
+        "BOM-custom_additional_cost_configuration","BOM-custom_additonal_costs","Item-custom_reorders"
 	)]]
 
 	},
