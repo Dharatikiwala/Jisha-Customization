@@ -17,5 +17,18 @@ frappe.query_reports["Auto Reorder Level"] = {
 			label: __("To Date"),
 			fieldtype: "Date",
 		},
+		{
+			fieldname:"warehouse",
+			label: __("Warehouse"),
+			fieldtype: "Link",
+			options: "Warehouse",
+			get_query: function() {
+				return {
+					filters: {
+						"is_group": 1
+					}
+				};
+			}
+		}
 	]
 };
