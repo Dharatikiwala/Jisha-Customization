@@ -52,7 +52,7 @@ def execute(filters=None):
 		ordered_qty = get_order_qty(item.name, from_date, to_date,warehouse_data)
 		transferred_qty = get_transferred_qty(item.name, from_date, to_date,warehouse_data)
 		
-		balance_qty = (opening_qty + received_qty) - (issued_qty + ordered_qty + transferred_qty)
+		balance_qty = (opening_qty + received_qty) - (issued_qty + transferred_qty)
 		
 		data.append({
 			"item_name": item.name,
@@ -111,7 +111,7 @@ def get_received_qty(item, from_date, to_date, warehouse_data):
 		""", (item, tuple(warehouse_data), from_date, to_date, item, from_date, to_date, tuple(warehouse_data)))
 	return qty[0][0] if qty and qty[0][0] else 0
 
-def get_issued_qty(item, from_date, to_date,warehouse_data):
+def get_issued_qty(item, from_date, to_date, warehouse_data):
 	qty = frappe.db.sql(
 		"""
 		SELECT COALESCE(
@@ -130,14 +130,43 @@ def get_issued_qty(item, from_date, to_date,warehouse_data):
 			FROM `tabDelivery Note Item` dni
 			INNER JOIN `tabDelivery Note` dn ON dni.parent = dn.name
 			WHERE dni.item_code=%s 
-			AND dni.warehouse IN %s	
+			AND dni.warehouse IN %s    
 			AND dn.posting_date BETWEEN %s AND %s
 			AND dn.docstatus = 1),
 			0
+		) +
+		COALESCE(
+			(SELECT SUM(sed.qty)
+			FROM `tabStock Entry Detail` sed
+			INNER JOIN `tabStock Entry` se ON sed.parent = se.name
+			WHERE sed.item_code=%s
+			AND sed.s_warehouse IN %s
+			AND se.posting_date BETWEEN %s AND %s
+			AND se.stock_entry_type = 'Material Issue'
+			AND se.docstatus = 1),
+			0
+		) +
+		COALESCE(
+			(SELECT SUM(sed.qty)
+			FROM `tabStock Entry Detail` sed
+			INNER JOIN `tabStock Entry` se ON sed.parent = se.name
+			WHERE sed.item_code=%s
+			AND sed.s_warehouse IN %s
+			AND sed.t_warehouse NOT IN %s
+			AND se.posting_date BETWEEN %s AND %s
+			AND se.stock_entry_type = 'Material Transfer'
+			AND se.docstatus = 1),
+			0
 		)
-		""", (item, tuple(warehouse_data),from_date, to_date, item, tuple(warehouse_data),from_date, to_date))
+		""", (
+			item, tuple(warehouse_data), from_date, to_date,
+			item, tuple(warehouse_data), from_date, to_date,
+			item, tuple(warehouse_data), from_date, to_date,
+			item, tuple(warehouse_data), tuple(warehouse_data), from_date, to_date
+		)
+	)
 	return qty[0][0] if qty and qty[0][0] else 0
-
+	
 def get_order_qty(item, from_date, to_date,warehouse_data):
 	qty = frappe.db.sql(
 		"""
@@ -149,7 +178,6 @@ def get_order_qty(item, from_date, to_date,warehouse_data):
 		AND mri.schedule_date BETWEEN %s AND %s
 		AND mr.material_request_type='Material Transfer'
 		AND mr.docstatus = 1
-		AND mr.status = 'pending'
 		""", (item, tuple(warehouse_data),from_date, to_date))
 	return qty[0][0] if qty and qty[0][0] else 0
 
