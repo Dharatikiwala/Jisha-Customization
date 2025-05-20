@@ -1,0 +1,169 @@
+{
+ "actions": [],
+ "autoname": "format:JE{batch}{####}",
+ "creation": "2025-04-30 15:55:27.063418",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "barcode_details_section",
+  "item_code",
+  "item_name",
+  "batch",
+  "item_qty",
+  "column_break_eqfr",
+  "manufacturing_date",
+  "reference_of_manufacturing_entry",
+  "warehouse",
+  "box_details_section",
+  "reference_of_box",
+  "linked_documents_section",
+  "status",
+  "reference_of_delivery_note",
+  "returned_delivery_reference",
+  "column_break_nvpz",
+  "reference_of_sales_invoice",
+  "returned_sales_reference"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Item Code",
+   "options": "Item"
+  },
+  {
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name"
+  },
+  {
+   "fieldname": "column_break_eqfr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "manufacturing_date",
+   "fieldtype": "Date",
+   "label": "Manufacturing Date"
+  },
+  {
+   "fieldname": "reference_of_manufacturing_entry",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Reference of Manufacturing Entry",
+   "options": "Stock Entry"
+  },
+  {
+   "fieldname": "barcode_details_section",
+   "fieldtype": "Section Break",
+   "label": "Barcode Details"
+  },
+  {
+   "fieldname": "batch",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Reference of Batch",
+   "options": "Batch"
+  },
+  {
+   "fieldname": "box_details_section",
+   "fieldtype": "Section Break",
+   "label": "Box Details"
+  },
+  {
+   "description": "This Barcode has been added in this box while creating the Box",
+   "fieldname": "reference_of_box",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Reference of Box",
+   "options": "Box Creation"
+  },
+  {
+   "fieldname": "linked_documents_section",
+   "fieldtype": "Section Break",
+   "label": "Linked Documents"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nDelivered\nReturned"
+  },
+  {
+   "fieldname": "reference_of_delivery_note",
+   "fieldtype": "Link",
+   "label": "Reference of Delivery Note",
+   "options": "Delivery Note"
+  },
+  {
+   "fieldname": "returned_delivery_reference",
+   "fieldtype": "Link",
+   "label": "Returned Delivery Reference",
+   "options": "Delivery Note"
+  },
+  {
+   "fieldname": "column_break_nvpz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference_of_sales_invoice",
+   "fieldtype": "Link",
+   "label": "Reference of Sales Invoice",
+   "options": "Sales Invoice"
+  },
+  {
+   "fieldname": "returned_sales_reference",
+   "fieldtype": "Link",
+   "label": "Returned Sales Reference",
+   "options": "Sales Invoice"
+  },
+  {
+   "fieldname": "item_qty",
+   "fieldtype": "Int",
+   "label": "Item Qty"
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-05-15 13:48:28.919671",
+ "modified_by": "Administrator",
+ "module": "Jisha Customization",
+ "name": "Barcode Entry",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

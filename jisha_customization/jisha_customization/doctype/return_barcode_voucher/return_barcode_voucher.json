@@ -1,0 +1,149 @@
+{
+ "actions": [],
+ "autoname": "format:RBJE{MM}{YY}{#####}",
+ "creation": "2025-05-08 10:59:57.049585",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_a8lq",
+  "amended_from",
+  "customer",
+  "address",
+  "column_break_cyzv",
+  "date",
+  "customer_address",
+  "company_details_section",
+  "company",
+  "company_address",
+  "column_break_stnu",
+  "company_address_display",
+  "returned_barcode_details_section",
+  "scan_barcode",
+  "returned_items"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_a8lq",
+   "fieldtype": "Section Break",
+   "label": "Customer Details"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Return Barcode Voucher",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "column_break_cyzv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "customer_address",
+   "fieldtype": "Small Text",
+   "label": "Customer Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company_details_section",
+   "fieldtype": "Section Break",
+   "label": "Company Details"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_stnu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Jisha Enterprise Private Limited-Billing",
+   "fieldname": "company_address",
+   "fieldtype": "Link",
+   "label": "Company Address",
+   "options": "Address",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "customer.customer_primary_address",
+   "fieldname": "address",
+   "fieldtype": "Link",
+   "label": "Address",
+   "options": "Address"
+  },
+  {
+   "fieldname": "returned_barcode_details_section",
+   "fieldtype": "Section Break",
+   "label": "Returned Barcode Details"
+  },
+  {
+   "description": "Scan Returned Box or Barcodes",
+   "fieldname": "scan_barcode",
+   "fieldtype": "Data",
+   "label": "Scan Barcode",
+   "options": "Barcode"
+  },
+  {
+   "fieldname": "returned_items",
+   "fieldtype": "Table",
+   "label": "Returned Items",
+   "options": "Returned Barcode Table"
+  },
+  {
+   "fieldname": "company_address_display",
+   "fieldtype": "Small Text",
+   "label": "Company Address Display",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-05-15 13:50:43.935299",
+ "modified_by": "Administrator",
+ "module": "Jisha Customization",
+ "name": "Return Barcode Voucher",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
