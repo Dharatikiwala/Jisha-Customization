@@ -32,6 +32,9 @@ app_license = "mit"
 doctype_js = {
     "Work Order" : "custom_scripts/work_order.js",
 	"BOM" : "custom_scripts/bom.js",
+    "Stock Entry":"custom_scripts/stock_entry.js",
+    "Sales Invoice":"custom_scripts/sales_invoice.js",
+    "Delivery Note":"custom_scripts/delivery_note.js"
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -129,7 +132,17 @@ doctype_js = {
 doc_events = {
 	"Stock Entry": {
 		"before_save": "jisha_customization.jisha_customization.override.stock_entry.before_save",
-    }
+		"on_submit": "jisha_customization.jisha_customization.override.stock_entry.on_submit",
+		"on_cancel": "jisha_customization.jisha_customization.override.stock_entry.on_cancel"
+	},
+	"Sales Invoice": {
+		"on_submit": "jisha_customization.jisha_customization.override.sales_invoice.on_submit",
+        "on_cancel": "jisha_customization.jisha_customization.override.sales_invoice.on_cancel"
+	},
+    "Delivery Note": {
+		"on_submit": "jisha_customization.jisha_customization.override.delivery_note.on_submit",
+        "on_cancel": "jisha_customization.jisha_customization.override.delivery_note.on_cancel"
+	}
 }
 
 # Scheduled Tasks
@@ -231,12 +244,15 @@ doc_events = {
 
 fixtures = [
 	{"dt":"Custom Field","filters":[["name","in",(
-        "BOM-custom_additional_cost_configuration","BOM-custom_additonal_costs","Item-custom_reorders"
+        "BOM-custom_additional_cost_configuration","BOM-custom_additonal_costs","Item-custom_reorders",
+        "Stock Entry Detail-custom_barcodes","Sales Invoice-custom_scan_barcodes","Sales Invoice Item-custom_barcodes",
+        "Sales Invoice Item-custom_box_creation_reference","Delivery Note-custom_scan_barcodes","Delivery Note Item-custom_box_creation_reference",
+        "Delivery Note Item-custom_barcodes","Stock Entry-custom_scan_barcodes"
 	)]]
 
 	},
     {"dt":"Property Setter","filters":[["name","in",(
-		"Landed Cost Taxes and Charges-amount-description"
+		"Landed Cost Taxes and Charges-amount-description","Delivery Note-scan_barcode-hidden","Sales Invoice-scan_barcode-hidden","Stock Entry-scan_barcode-hidden"
 	)]]
 
 	}

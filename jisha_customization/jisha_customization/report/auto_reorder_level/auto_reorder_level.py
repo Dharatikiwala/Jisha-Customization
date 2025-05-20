@@ -4,13 +4,79 @@
 import frappe
 from frappe.utils import getdate
 
+# def execute(filters=None):
+# 	if not filters:
+# 		filters = {}
+	
+# 	from_date = getdate(filters.get("from_date"))
+# 	to_date = getdate(filters.get("to_date"))
+# 	warehouse = filters.get("warehouse")
+# 	item_code = filters.get("item_code")
+# 	item_group = filters.get("item_group")
+	
+# 	columns = [
+# 		{"label": "Item Name", "fieldname": "item_name", "fieldtype": "Data", "width": 200},
+# 		{"label": "Warehouse", "fieldname": "warehouse_group", "fieldtype": "Data", "width": 200},
+# 		{"label": "Reorder Level", "fieldname": "reorder_level", "fieldtype": "Float", "width": 140},
+# 		{"label": "Opening Qty", "fieldname": "opening_qty", "fieldtype": "Float", "width": 140},
+# 		{"label": "Received Qty", "fieldname": "received_qty", "fieldtype": "Float", "width": 140},
+# 		{"label": "Issued Qty", "fieldname": "issued_qty", "fieldtype": "Float", "width": 140},
+# 		{"label": "Ordered Qty", "fieldname": "ordered_qty", "fieldtype": "Float", "width": 150},
+# 		{"label": "Transferred Qty", "fieldname": "transferred_qty", "fieldtype": "Float", "width": 140},
+# 		{"label": "Balance Qty", "fieldname": "balance_qty", "fieldtype": "Float", "width": 150}
+# 	]
+	
+# 	data = []
+
+# 	if warehouse:
+# 		items = frappe.db.sql("""
+# 		SELECT i.name, ir.warehouse_group FROM `tabItem` i 
+# 		LEFT JOIN `tabItem Reorders` ir ON ir.parent = i.name 
+# 		WHERE i.disabled = 0 AND ir.reorder_qty IS NOT NULL AND ir.warehouse_group = %s
+# 		""", (warehouse,), as_dict=True)
+
+# 	else:
+# 		items = frappe.db.sql("""
+# 		SELECT i.name, ir.warehouse_group FROM `tabItem` i 
+# 		LEFT JOIN `tabItem Reorders` ir ON ir.parent = i.name 
+# 		WHERE i.disabled = 0 AND ir.reorder_qty IS NOT NULL
+# 		""", as_dict=True)
+	
+# 	if not items:
+# 		frappe.msgprint("No Items Found")
+# 		return columns, data
+	
+# 	for item in items:
+# 		reorder_level = get_reorder_level(item.name)
+# 		warehouse_data = get_warehouse_group_list(item.warehouse_group)
+# 		opening_qty = get_closing_qty(item.name, from_date,warehouse_data)
+# 		received_qty = get_received_qty(item.name, from_date, to_date,warehouse_data)
+# 		issued_qty = get_issued_qty(item.name, from_date, to_date,warehouse_data)
+# 		ordered_qty = get_order_qty(item.name, from_date, to_date,warehouse_data)
+# 		transferred_qty = get_transferred_qty(item.name, from_date, to_date,warehouse_data)
+		
+# 		balance_qty = (opening_qty + received_qty) - (issued_qty + transferred_qty)
+		
+# 		data.append({
+# 			"item_name": item.name,
+# 			"warehouse_group": item.warehouse_group,
+# 			"reorder_level": reorder_level,
+# 			"opening_qty": opening_qty,
+# 			"received_qty": received_qty,
+# 			"issued_qty": issued_qty,
+# 			"ordered_qty": ordered_qty,
+# 			"transferred_qty": transferred_qty,
+# 			"balance_qty": balance_qty
+# 		})
+	
+# 	return columns, data
+
 def execute(filters=None):
 	if not filters:
 		filters = {}
 	
 	from_date = getdate(filters.get("from_date"))
 	to_date = getdate(filters.get("to_date"))
-	warehouse = filters.get("warehouse")
 	
 	columns = [
 		{"label": "Item Name", "fieldname": "item_name", "fieldtype": "Data", "width": 200},
@@ -19,40 +85,58 @@ def execute(filters=None):
 		{"label": "Opening Qty", "fieldname": "opening_qty", "fieldtype": "Float", "width": 140},
 		{"label": "Received Qty", "fieldname": "received_qty", "fieldtype": "Float", "width": 140},
 		{"label": "Issued Qty", "fieldname": "issued_qty", "fieldtype": "Float", "width": 140},
+		{"label": "Balance Qty", "fieldname": "balance_qty", "fieldtype": "Float", "width": 150},
 		{"label": "Ordered Qty", "fieldname": "ordered_qty", "fieldtype": "Float", "width": 150},
 		{"label": "Transferred Qty", "fieldname": "transferred_qty", "fieldtype": "Float", "width": 140},
-		{"label": "Balance Qty", "fieldname": "balance_qty", "fieldtype": "Float", "width": 150}
+		{"label": "Balance Qty", "fieldname": "second_balance_qty", "fieldtype": "Float", "width": 150}
 	]
 	
-	data = []
+	# Build query conditions dynamically
+	conditions = ["i.disabled = 0", "ir.reorder_qty IS NOT NULL"]
+	params = []
 	
-	if warehouse:
-		items = frappe.db.sql("""
-		SELECT i.name, ir.warehouse_group FROM `tabItem` i 
-		LEFT JOIN `tabItem Reorders` ir ON ir.parent = i.name 
-		WHERE i.disabled = 0 AND ir.reorder_qty IS NOT NULL AND ir.warehouse_group = %s
-		""", (warehouse,), as_dict=True)
-	else:
-		items = frappe.db.sql("""
-		SELECT i.name, ir.warehouse_group FROM `tabItem` i 
-		LEFT JOIN `tabItem Reorders` ir ON ir.parent = i.name 
-		WHERE i.disabled = 0 AND ir.reorder_qty IS NOT NULL
-		""", as_dict=True)
+	filter_map = {
+		"warehouse": "ir.warehouse_group = %s",
+		"item_code": "i.name = %s",
+		"item_group": "i.item_group = %s"
+	}
+	
+	# Add conditions based on provided filters
+	for filter_key, condition in filter_map.items():
+		if filters.get(filter_key):
+			conditions.append(condition)
+			params.append(filters.get(filter_key))
+	
+	# Construct the query
+	query = """
+	SELECT 
+		i.name, 
+		ir.warehouse_group
+	FROM `tabItem` i 
+	LEFT JOIN `tabItem Reorders` ir ON ir.parent = i.name 
+	WHERE {0}
+	""".format(" AND ".join(conditions))
+	
+	items = frappe.db.sql(query, tuple(params), as_dict=True)
 	
 	if not items:
 		frappe.msgprint("No Items Found")
-		return columns, data
+		return columns, []
+	
+	data = []
 	
 	for item in items:
 		reorder_level = get_reorder_level(item.name)
 		warehouse_data = get_warehouse_group_list(item.warehouse_group)
-		opening_qty = get_closing_qty(item.name, from_date,warehouse_data)
-		received_qty = get_received_qty(item.name, from_date, to_date,warehouse_data)
-		issued_qty = get_issued_qty(item.name, from_date, to_date,warehouse_data)
-		ordered_qty = get_order_qty(item.name, from_date, to_date,warehouse_data)
-		transferred_qty = get_transferred_qty(item.name, from_date, to_date,warehouse_data)
+		opening_qty = get_closing_qty(item.name, from_date, warehouse_data)
+		received_qty = get_received_qty(item.name, from_date, to_date, warehouse_data)
+		issued_qty = get_issued_qty(item.name, from_date, to_date, warehouse_data)
+		ordered_qty = get_order_qty(item.name, from_date, to_date, warehouse_data)
+		transferred_qty = get_transferred_qty(item.name, from_date, to_date, warehouse_data)
 		
-		balance_qty = (opening_qty + received_qty) - (issued_qty + transferred_qty)
+		# balance_qty = (opening_qty + received_qty) - (issued_qty + transferred_qty)
+		balance_qty = (opening_qty + received_qty) - (issued_qty)
+		second_balance_qty = ordered_qty - transferred_qty
 		
 		data.append({
 			"item_name": item.name,
@@ -63,7 +147,9 @@ def execute(filters=None):
 			"issued_qty": issued_qty,
 			"ordered_qty": ordered_qty,
 			"transferred_qty": transferred_qty,
-			"balance_qty": balance_qty
+			"balance_qty": balance_qty,
+			"second_balance_qty": second_balance_qty
+
 		})
 	
 	return columns, data
@@ -176,7 +262,6 @@ def get_order_qty(item, from_date, to_date,warehouse_data):
 		WHERE mri.item_code=%s 
 		AND mri.warehouse IN %s
 		AND mri.schedule_date BETWEEN %s AND %s
-		AND mr.material_request_type='Material Transfer'
 		AND mr.docstatus = 1
 		""", (item, tuple(warehouse_data),from_date, to_date))
 	return qty[0][0] if qty and qty[0][0] else 0
@@ -190,7 +275,6 @@ def get_transferred_qty(item, from_date, to_date,warehouse_data):
 		WHERE mri.item_code=%s 
 		AND mri.warehouse IN %s
 		AND mri.schedule_date BETWEEN %s AND %s
-		AND mr.material_request_type='Material Transfer'
 		AND mr.docstatus = 1
 		AND mr.status IN ('Transferred', 'Partially Received')
 		""", (item, tuple(warehouse_data),from_date, to_date))

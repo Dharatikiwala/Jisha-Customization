@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-05-08 11:34:27.326665",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "returned_barcodes_section",
+  "item_code",
+  "quantity",
+  "batch_no",
+  "box_creation_reference",
+  "barcodes",
+  "delivery_note_reference",
+  "sales_invoice_reference",
+  "returned_delivery_note",
+  "returned_sales_invoice"
+ ],
+ "fields": [
+  {
+   "fieldname": "returned_barcodes_section",
+   "fieldtype": "Section Break",
+   "label": "Returned Barcodes"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item"
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Returned Quantity"
+  },
+  {
+   "fieldname": "batch_no",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Batch No",
+   "options": "Batch"
+  },
+  {
+   "fieldname": "box_creation_reference",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Box Creation Reference",
+   "options": "Box Creation"
+  },
+  {
+   "fieldname": "barcodes",
+   "fieldtype": "Text",
+   "in_list_view": 1,
+   "label": "Barcodes"
+  },
+  {
+   "fieldname": "delivery_note_reference",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Delivery Note Reference",
+   "options": "Delivery Note"
+  },
+  {
+   "fieldname": "sales_invoice_reference",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sales Invoice Reference",
+   "options": "Sales Invoice"
+  },
+  {
+   "fieldname": "returned_delivery_note",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Returned Delivery Note",
+   "options": "Delivery Note"
+  },
+  {
+   "fieldname": "returned_sales_invoice",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Returned Sales Invoice",
+   "options": "Sales Invoice"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-05-08 12:02:35.864329",
+ "modified_by": "Administrator",
+ "module": "Jisha Customization",
+ "name": "Returned Barcode Table",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
