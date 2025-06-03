@@ -1,6 +1,6 @@
 frappe.ui.form.on('Stock Entry', {
     refresh(frm) {
-        if(frm.doc.docstatus === 1 && frm.doc.stock_entry_type === "Manufacture") {
+        if(frm.doc.docstatus === 1 && (frm.doc.purpose === "Manufacture" || frm.doc.purpose === "Material Receipt")) {
             frm.add_custom_button("Generate Barcode Entry", function() {
                 frappe.call({
                     method: "jisha_customization.jisha_customization.override.stock_entry.create_barcode_entry",
