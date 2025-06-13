@@ -35,7 +35,7 @@ frappe.ui.form.on('Sales Invoice', {
                                 frm.set_value("custom_scan_barcodes", "");
                                 return
                             } else {
-                                frm.doc.items = [];
+                                // frm.doc.items = [];
                                 let row;
                                 const emptyRow = frm.doc.items.find(item => 
                                     (item.qty === 0 || !item.qty) || 
