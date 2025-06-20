@@ -140,7 +140,7 @@ class Analytics:
 	def get_sales_transactions_based_on_order_type(self):
 		if self.filters["value_quantity"] == "Value":
 			# value_field = "base_net_total"
-			value_field = "grand_total"
+			value_field = "rounded_total"
 		else:
 			value_field = "total_qty"
 
@@ -164,10 +164,48 @@ class Analytics:
 
 		self.get_teams()
 
+	# def get_sales_transactions_based_on_customers_or_suppliers(self):
+	# 	if self.filters["value_quantity"] == "Value":
+	# 		# value_field = "base_net_total as value_field"
+	# 		value_field = "rounded_total as value_field"
+	# 	else:
+	# 		value_field = "total_qty as value_field"
+
+	# 	if self.filters.tree_type == "Customer":
+	# 		entity = "customer as entity"
+	# 		entity_name = "customer_name as entity_name"
+	# 	else:
+	# 		entity = "supplier as entity"
+	# 		entity_name = "supplier_name as entity_name"
+
+	# 	if self.filters.doc_type == "Sales Invoice":
+	# 		filters = {
+	# 			"custom_sales_invoice_type":"Actual Sales",
+	# 			"docstatus": 1,
+	# 			"company": ["in", self.filters.company],
+	# 			self.date_field: ("between", [self.filters.from_date, self.filters.to_date]),
+	# 		}
+	# 	else:
+	# 		filters = {
+	# 			"docstatus": 1,
+	# 			"company": ["in", self.filters.company],
+	# 			self.date_field: ("between", [self.filters.from_date, self.filters.to_date]),
+	# 		}
+
+	# 	self.entries = frappe.get_all(
+	# 		self.filters.doc_type,
+	# 		fields=[entity, entity_name, value_field, self.date_field],
+	# 		filters=filters,
+	# 	)
+
+	# 	self.entity_names = {}
+	# 	for d in self.entries:
+	# 		self.entity_names.setdefault(d.entity, d.entity_name)
+
 	def get_sales_transactions_based_on_customers_or_suppliers(self):
 		if self.filters["value_quantity"] == "Value":
 			# value_field = "base_net_total as value_field"
-			value_field = "grand_total as value_field"
+			value_field = "rounded_total as value_field"
 		else:
 			value_field = "total_qty as value_field"
 
@@ -192,11 +230,28 @@ class Analytics:
 				self.date_field: ("between", [self.filters.from_date, self.filters.to_date]),
 			}
 
+		# Get all entries including return orders
 		self.entries = frappe.get_all(
 			self.filters.doc_type,
-			fields=[entity, entity_name, value_field, self.date_field],
+			fields=[entity, entity_name, value_field, self.date_field, "is_return", "custom_return_against"],
 			filters=filters,
 		)
+
+		# Process entries to handle return order deductions
+		processed_entries = []
+		for entry in self.entries:
+			if entry.get("is_return"):
+				# Only deduct return orders where custom_return_against == "goods"
+				if entry.get("custom_return_against") == "Goods":
+					# Make the value negative for deduction
+					entry["value_field"] = -abs(entry["value_field"])
+					processed_entries.append(entry)
+				# Skip return orders that don't have custom_return_against == "goods"
+			else:
+				# Regular entries (not return orders) - keep as is
+				processed_entries.append(entry)
+		
+		self.entries = processed_entries
 
 		self.entity_names = {}
 		for d in self.entries:
@@ -205,7 +260,7 @@ class Analytics:
 	def get_sales_transactions_based_on_items(self):
 		if self.filters["value_quantity"] == "Value":
 			# value_field = "base_net_amount"
-			value_field = "grand_total"
+			value_field = "rounded_total"
 		else:
 			value_field = "stock_qty"
 
