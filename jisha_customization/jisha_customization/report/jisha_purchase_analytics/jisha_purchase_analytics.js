@@ -1,30 +1,22 @@
 // Copyright (c) 2025, Akhilam Inc. and contributors
 // For license information, please see license.txt
 
-frappe.query_reports["Jisha Sales Analytics"] = {
+frappe.query_reports["Jisha Purchase Analytics"] = {
 	filters: [
 		{
 			fieldname: "tree_type",
 			label: __("Tree Type"),
 			fieldtype: "Select",
-			options: [
-				"Customer Group",
-				"Customer",
-				"Item Group",
-				"Item",
-				"Territory",
-				"Order Type",
-				"Project",
-			],
-			default: "Customer",
+			options: ["Supplier Group", "Supplier", "Item Group", "Item"],
+			default: "Supplier",
 			reqd: 1,
 		},
 		{
 			fieldname: "doc_type",
 			label: __("based_on"),
 			fieldtype: "Select",
-			options: ["Sales Order", "Delivery Note", "Sales Invoice"],
-			default: "Sales Invoice",
+			options: ["Purchase Order", "Purchase Receipt", "Purchase Invoice"],
+			default: "Purchase Invoice",
 			reqd: 1,
 		},
 		{
@@ -80,11 +72,12 @@ frappe.query_reports["Jisha Sales Analytics"] = {
 			options: "Branch",
 		},
 		{
-			fieldname: "show_aggregate_value_from_subsidiary_companies",
-			label: __("Show Aggregate Value from Subsidiary Companies"),
-			fieldtype: "Check",
+			fieldname: "purchase_type",
+			label: __("Purchase Type"),
+			fieldtype: "Select",
+			options: ["", "Materials", "Expenses"],
+			depends_on: "eval:doc.tree_type == 'Supplier'"
 		},
-		
 	],
 	get_datatable_options(options) {
 		return Object.assign(options, {
@@ -92,30 +85,49 @@ frappe.query_reports["Jisha Sales Analytics"] = {
 			events: {
 				onCheckRow: function (data) {
 					if (!data) return;
+
 					const data_doctype = $(data[2].html)[0].attributes.getNamedItem("data-doctype").value;
 					const tree_type = frappe.query_report.filters[0].value;
 					if (data_doctype != tree_type) return;
 
-					const row_name = data[2].content;
-					const raw_data = frappe.query_report.chart.data;
-					const new_datasets = raw_data.datasets;
-					const element_found = new_datasets.some((element, index, array) => {
+					let row_name = data[2].content;
+					let length = data.length;
+					let row_values = "";
+
+					if (tree_type == "Supplier") {
+						row_values = data.slice(4, length - 1).map(function (column) {
+							return column.content;
+						});
+					} else if (tree_type == "Item") {
+						row_values = data.slice(5, length - 1).map(function (column) {
+							return column.content;
+						});
+					} else {
+						row_values = data.slice(3, length - 1).map(function (column) {
+							return column.content;
+						});
+					}
+
+					let entry = {
+						name: row_name,
+						values: row_values,
+					};
+
+					let raw_data = frappe.query_report.chart.data;
+					let new_datasets = raw_data.datasets;
+
+					let element_found = new_datasets.some((element, index, array) => {
 						if (element.name == row_name) {
 							array.splice(index, 1);
 							return true;
 						}
 						return false;
 					});
-					const slice_at = { Customer: 4, Item: 5 }[tree_type] || 3;
 
 					if (!element_found) {
-						new_datasets.push({
-							name: row_name,
-							values: data.slice(slice_at, data.length - 1).map((column) => column.content),
-						});
+						new_datasets.push(entry);
 					}
-
-					const new_data = {
+					let new_data = {
 						labels: raw_data.labels,
 						datasets: new_datasets,
 					};
