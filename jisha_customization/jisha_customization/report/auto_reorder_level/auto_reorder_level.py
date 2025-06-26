@@ -193,8 +193,19 @@ def get_received_qty(item, from_date, to_date, warehouse_data):
 			AND se.stock_entry_type IN ('Manufacture', 'Material Receipt')
 			AND se.docstatus = 1),
 			0
+		) +
+		COALESCE(
+			(SELECT SUM(pii.qty)
+			FROM `tabPurchase Invoice Item` pii
+			INNER JOIN `tabPurchase Invoice` pi ON pii.parent = pi.name
+			WHERE pi.update_stock = 1
+			AND pii.item_code=%s 
+			AND pi.posting_date BETWEEN %s AND %s
+			AND pii.warehouse IN %s
+			AND pi.docstatus = 1),
+			0
 		)
-		""", (item, tuple(warehouse_data), from_date, to_date, item, from_date, to_date, tuple(warehouse_data)))
+		""", (item, tuple(warehouse_data), from_date, to_date, item, from_date, to_date, tuple(warehouse_data), item, from_date, to_date, tuple(warehouse_data)))
 	return qty[0][0] if qty and qty[0][0] else 0
 
 def get_issued_qty(item, from_date, to_date, warehouse_data):
@@ -253,31 +264,66 @@ def get_issued_qty(item, from_date, to_date, warehouse_data):
 	)
 	return qty[0][0] if qty and qty[0][0] else 0
 	
-def get_order_qty(item, from_date, to_date,warehouse_data):
+def get_order_qty(item, from_date, to_date, warehouse_data):
 	qty = frappe.db.sql(
 		"""
-		SELECT SUM(mri.qty) 
-		FROM `tabMaterial Request Item` mri
-		INNER JOIN `tabMaterial Request` mr ON mri.parent = mr.name
-		WHERE mri.item_code=%s 
-		AND mri.warehouse IN %s
-		AND mri.schedule_date BETWEEN %s AND %s
-		AND mr.docstatus = 1
-		""", (item, tuple(warehouse_data),from_date, to_date))
+		SELECT 
+			COALESCE((
+				SELECT SUM(mri.qty) 
+				FROM `tabMaterial Request Item` mri
+				INNER JOIN `tabMaterial Request` mr ON mri.parent = mr.name
+				WHERE mri.item_code=%s 
+				AND mri.warehouse IN %s
+				AND mri.schedule_date BETWEEN %s AND %s
+				AND mr.docstatus = 1
+			), 0)
+			+
+			COALESCE((
+				SELECT SUM(poi.qty)
+				FROM `tabPurchase Order Item` poi
+				INNER JOIN `tabPurchase Order` po ON poi.parent = po.name
+				WHERE poi.item_code=%s
+				AND poi.warehouse IN %s
+				AND po.transaction_date BETWEEN %s AND %s
+				AND po.docstatus = 1
+			), 0)
+		""", (
+			item, tuple(warehouse_data), from_date, to_date,
+			item, tuple(warehouse_data), from_date, to_date
+		)
+	)
 	return qty[0][0] if qty and qty[0][0] else 0
 
-def get_transferred_qty(item, from_date, to_date,warehouse_data):
+def get_transferred_qty(item, from_date, to_date, warehouse_data):
 	qty = frappe.db.sql(
 		"""
-		SELECT SUM(mri.ordered_qty) 
-		FROM `tabMaterial Request Item` mri
-		INNER JOIN `tabMaterial Request` mr ON mri.parent = mr.name
-		WHERE mri.item_code=%s 
-		AND mri.warehouse IN %s
-		AND mri.schedule_date BETWEEN %s AND %s
-		AND mr.docstatus = 1
-		AND mr.status IN ('Transferred', 'Partially Received')
-		""", (item, tuple(warehouse_data),from_date, to_date))
+		SELECT 
+			COALESCE((
+				SELECT SUM(mri.ordered_qty) 
+				FROM `tabMaterial Request Item` mri
+				INNER JOIN `tabMaterial Request` mr ON mri.parent = mr.name
+				WHERE mri.item_code=%s 
+				AND mri.warehouse IN %s
+				AND mri.schedule_date BETWEEN %s AND %s
+				AND mr.docstatus = 1
+				AND mr.status IN ('Transferred', 'Partially Received')
+			), 0)
+			+
+			COALESCE((
+				SELECT SUM(pri.qty)
+				FROM `tabPurchase Receipt Item` pri
+				INNER JOIN `tabPurchase Receipt` pr ON pri.parent = pr.name
+				WHERE pri.item_code=%s
+				AND pri.warehouse IN %s
+				AND pr.posting_date BETWEEN %s AND %s
+				AND pr.docstatus = 1
+			), 0)
+		""",
+		(
+			item, tuple(warehouse_data), from_date, to_date,
+			item, tuple(warehouse_data), from_date, to_date
+		)
+	)
 	return qty[0][0] if qty and qty[0][0] else 0
 
 
