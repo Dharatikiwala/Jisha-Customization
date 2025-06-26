@@ -34,7 +34,8 @@ doctype_js = {
 	"BOM" : "custom_scripts/bom.js",
     "Stock Entry":"custom_scripts/stock_entry.js",
     "Sales Invoice":"custom_scripts/sales_invoice.js",
-    "Delivery Note":"custom_scripts/delivery_note.js"
+    "Delivery Note":"custom_scripts/delivery_note.js",
+    "Payment Entry":"custom_scripts/payment_entry.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -247,12 +248,14 @@ fixtures = [
         "BOM-custom_additional_cost_configuration","BOM-custom_additonal_costs","Item-custom_reorders",
         "Stock Entry Detail-custom_barcodes","Sales Invoice-custom_scan_barcodes","Sales Invoice Item-custom_barcodes",
         "Sales Invoice Item-custom_box_creation_reference","Delivery Note-custom_scan_barcodes","Delivery Note Item-custom_box_creation_reference",
-        "Delivery Note Item-custom_barcodes","Stock Entry-custom_scan_barcodes"
+        "Delivery Note Item-custom_barcodes","Stock Entry-custom_scan_barcodes","Payment Entry-custom_gets_outstanding_invoices",
+        "Payment Entry-custom_gets_outstanding_orders"
 	)]]
 
 	},
     {"dt":"Property Setter","filters":[["name","in",(
-		"Landed Cost Taxes and Charges-amount-description","Delivery Note-scan_barcode-hidden","Sales Invoice-scan_barcode-hidden","Stock Entry-scan_barcode-hidden"
+		"Landed Cost Taxes and Charges-amount-description","Delivery Note-scan_barcode-hidden","Sales Invoice-scan_barcode-hidden","Stock Entry-scan_barcode-hidden",
+        "Payment Entry-get_outstanding_invoices-hidden","Payment Entry-get_outstanding_orders-hidden"
 	)]]
 
 	}
