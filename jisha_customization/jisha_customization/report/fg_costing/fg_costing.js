@@ -48,6 +48,12 @@ frappe.query_reports["FG Costing"] = {
 					}
 				};
 			}
-		}
+		},
+		{
+			fieldname:"branch",
+			label: __("Branch"),
+			fieldtype: "Link",
+			options: "Branch"
+		},
 	]
 };
