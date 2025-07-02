@@ -201,13 +201,13 @@ class JishaAnalytics:
 			self.entries = frappe.get_all(
 				self.filters.doc_type,
 				fields=[entity, entity_name, value_field, self.date_field, "is_return", "custom_return_against"],
-				filters=filters,
+				filters=filters, order_by="entity asc"
 			)
 		else:
 			self.entries = frappe.get_all(
 				self.filters.doc_type,
 				fields=[entity, entity_name, value_field, self.date_field],
-				filters=filters,
+				filters=filters, order_by="entity asc"
 			)
 
 		# Process entries to handle return order deductions
