@@ -75,7 +75,7 @@ frappe.query_reports["Jisha Purchase Analytics"] = {
 			fieldname: "purchase_type",
 			label: __("Purchase Type"),
 			fieldtype: "Select",
-			options: ["", "Materials", "Expenses"],
+			options: ["", "Materials", "Expenses","Fixed Assets"],
 			depends_on: "eval:doc.tree_type == 'Supplier'"
 		},
 	],
