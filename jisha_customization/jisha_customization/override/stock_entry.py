@@ -10,7 +10,6 @@ def on_submit(self,method):
                 barcodes = [barcode.strip() for barcode in item.custom_barcodes.split("\n") if barcode.strip()]
                 for barcode in barcodes:
                     frappe.db.set_value("Barcode Entry", barcode, "warehouse", item.t_warehouse)
-        frappe.db.commit()
 
 def on_cancel(self,method):
 
@@ -20,7 +19,6 @@ def on_cancel(self,method):
                 barcodes = [barcode.strip() for barcode in item.custom_barcodes.split("\n") if barcode.strip()]
                 for barcode in barcodes:
                     frappe.db.set_value("Barcode Entry", barcode, "warehouse", item.s_warehouse)
-        frappe.db.commit()
 
 def before_save(self,method):
     entry_type = frappe.db.get_value("Stock Entry Type", self.stock_entry_type,"purpose")
