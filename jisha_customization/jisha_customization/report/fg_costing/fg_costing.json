@@ -1,5 +1,5 @@
 {
- "add_total_row": 1,
+ "add_total_row": 0,
  "add_translate_data": 0,
  "columns": [],
  "creation": "2025-06-24 16:25:49.980015",
@@ -10,7 +10,7 @@
  "idx": 0,
  "is_standard": "Yes",
  "letterhead": null,
- "modified": "2025-06-30 13:04:19.340324",
+ "modified": "2025-07-10 12:29:26.255865",
  "modified_by": "Administrator",
  "module": "Jisha Customization",
  "name": "FG Costing",

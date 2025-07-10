@@ -55,5 +55,16 @@ frappe.query_reports["FG Costing"] = {
 			fieldtype: "Link",
 			options: "Branch"
 		},
-	]
+	],
+
+	formatter: function(value, row, column, data, default_formatter) {
+        value = default_formatter(value, row, column, data);
+
+        // Apply bold styling to "Total" row
+        if (data && data.stock_entry_type === "Total") {
+            value = `<b>${value}</b>`;
+        }
+
+        return value;
+    }
 };
