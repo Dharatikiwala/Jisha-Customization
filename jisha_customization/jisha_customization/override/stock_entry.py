@@ -122,7 +122,6 @@ def create_barcode_entry(doc):
                 combined_barcodes
             )
 
-        frappe.db.commit()
         frappe.msgprint("Barcode entries created successfully.")
         return barcode_entry_refs
 
