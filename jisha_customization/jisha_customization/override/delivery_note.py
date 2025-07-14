@@ -15,7 +15,6 @@ def on_submit(self,method):
                 else:
                     frappe.db.set_value("Barcode Entry", barcode, "reference_of_delivery_note", self.name)
                     frappe.db.set_value("Barcode Entry", barcode, "status", "Delivered")
-                frappe.db.commit()
         
         for item in self.items:
             if item.custom_box_creation_reference:
@@ -23,7 +22,6 @@ def on_submit(self,method):
                     frappe.db.set_value("Box Creation", item.custom_box_creation_reference, "returned_delivery_reference", self.name)
                 else:
                     frappe.db.set_value("Box Creation", item.custom_box_creation_reference, "reference_of_delivery_note", self.name)
-                frappe.db.commit()
 
 def on_cancel(self,method):
     if self.items:
@@ -40,7 +38,6 @@ def on_cancel(self,method):
                 else:
                     frappe.db.set_value("Barcode Entry", barcode, "reference_of_delivery_note", "")
                     frappe.db.set_value("Barcode Entry", barcode, "status", "Active")
-                frappe.db.commit()
         
         for item in self.items:
             if item.custom_box_creation_reference:
@@ -48,4 +45,3 @@ def on_cancel(self,method):
                     frappe.db.set_value("Box Creation", item.custom_box_creation_reference, "returned_delivery_reference", "")
                 else:
                     frappe.db.set_value("Box Creation", item.custom_box_creation_reference, "reference_of_delivery_note", "")
-                frappe.db.commit()
