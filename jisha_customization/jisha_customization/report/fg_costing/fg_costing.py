@@ -133,7 +133,7 @@ def get_columns(filters):
 		{"label": "Posting Date", "fieldname": "posting_date", "fieldtype": "Date", "width": 120},
 		{"label": "Stock Entry Type", "fieldname": "stock_entry_type", "fieldtype": "Data", "width": 150},
 		{"label": "Stock Entry", "fieldname": "stock_entry_name", "fieldtype": "Link","options":"Stock Entry","width": 120},
-		{"label": "Work Order", "fieldname": "work_order", "fieldtype": "Data", "width": 120},
+		{"label": "Work Order", "fieldname": "work_order", "fieldtype": "Link", "options":"Work Order", "width": 120},
 		{"label": "Production Item", "fieldname": "item_code", "fieldtype": "Data", "width": 220},
 		{"label": "Qty to Produce", "fieldname": "qty_to_produce", "fieldtype": "Float","precision":2, "width": 120},
 		{"label": "Produce Qty", "fieldname": "produce_qty", "fieldtype": "Float","precision":2, "width": 120},
