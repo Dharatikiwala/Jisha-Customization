@@ -127,7 +127,19 @@ def get_received_qty(item, from_date, to_date, warehouse_data):
 			WHERE sed.item_code = %s
 			AND sed.t_warehouse IN %s
 			AND se.posting_date BETWEEN %s AND %s
-			AND se.stock_entry_type IN ('Manufacture', 'Material Receipt','Material Transfer')
+			AND se.stock_entry_type IN ('Manufacture', 'Material Receipt')
+			AND se.docstatus = 1
+		), 0) +
+
+		COALESCE((
+			SELECT SUM(sed.qty)
+			FROM `tabStock Entry Detail` sed
+			INNER JOIN `tabStock Entry` se ON sed.parent = se.name
+			WHERE sed.item_code = %s
+			AND sed.s_warehouse IN %s
+			AND sed.t_warehouse NOT IN %s
+			AND se.posting_date BETWEEN %s AND %s
+			AND se.stock_entry_type = 'Material Transfer'
 			AND se.docstatus = 1
 		), 0) +
 
@@ -167,6 +179,7 @@ def get_received_qty(item, from_date, to_date, warehouse_data):
 		(
 			item, tuple(warehouse_data), from_date, to_date,  # PR
 			item, tuple(warehouse_data), from_date, to_date,  # SE
+			item, tuple(warehouse_data), tuple(warehouse_data), from_date, to_date,  # SE Material Transfer (inward)
 			item, tuple(warehouse_data), from_date, to_date,  # PI
 			item, tuple(warehouse_data), from_date, to_date,  # SI Return
 			item, tuple(warehouse_data), from_date, to_date   # DN Return
@@ -180,7 +193,7 @@ def get_issued_qty(item, from_date, to_date, warehouse_data):
 		"""
 		SELECT
 		COALESCE((
-			SELECT SUM(sii.qty)
+			SELECT SUM(abs(sii.qty))
 			FROM `tabSales Invoice Item` sii
 			INNER JOIN `tabSales Invoice` si ON sii.parent = si.name
 			WHERE sii.item_code = %s
@@ -191,7 +204,7 @@ def get_issued_qty(item, from_date, to_date, warehouse_data):
 		), 0) +
 
 		COALESCE((
-			SELECT SUM(dni.qty)
+			SELECT SUM(abs(dni.qty))
 			FROM `tabDelivery Note Item` dni
 			INNER JOIN `tabDelivery Note` dn ON dni.parent = dn.name
 			WHERE dni.item_code = %s
