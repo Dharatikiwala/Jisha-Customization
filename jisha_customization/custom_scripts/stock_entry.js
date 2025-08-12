@@ -7,6 +7,8 @@ frappe.ui.form.on('Stock Entry', {
                     args: {
                         "doc": frm.doc
                     },
+                    freeze:true,
+                    freeze_message: __("Generating Barcode Entry..."),
                     callback: function(r) {
                         console.log(r.message);
                         frm.reload_doc()
