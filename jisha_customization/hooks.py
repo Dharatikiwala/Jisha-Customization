@@ -249,7 +249,7 @@ fixtures = [
         "Stock Entry Detail-custom_barcodes","Sales Invoice-custom_scan_barcodes","Sales Invoice Item-custom_barcodes",
         "Sales Invoice Item-custom_box_creation_reference","Delivery Note-custom_scan_barcodes","Delivery Note Item-custom_box_creation_reference",
         "Delivery Note Item-custom_barcodes","Stock Entry-custom_scan_barcodes","Payment Entry-custom_gets_outstanding_invoices",
-        "Payment Entry-custom_gets_outstanding_orders"
+        "Payment Entry-custom_gets_outstanding_orders","Stock Entry Detail-custom_box_reference"
 	)]]
 
 	},

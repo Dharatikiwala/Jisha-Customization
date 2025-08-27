@@ -128,3 +128,120 @@ def create_barcode_entry(doc):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Barcode Entry Creation Failed")
         frappe.throw("An error occurred while creating barcode entries. Please check error logs.")
+
+@frappe.whitelist()
+def get_items(doc_name):
+
+    get_items = frappe.db.sql("""
+    select item_code,qty,batch_no,t_warehouse,custom_barcodes,length(custom_barcodes) - length(replace(custom_barcodes, '\n', '')) + 1 as barcode_count
+    from `tabStock Entry Detail`
+    where parent = %s and custom_barcodes is not null AND custom_box_reference in (null,'')  
+    order by idx
+    """, (doc_name), as_dict=1)
+
+    if not get_items:
+        frappe.throw("All items must have boxes created or barcodes do not exist for box creation.")
+    return get_items
+                             
+
+
+@frappe.whitelist()
+def create_box_creation(item_dict, stock_entry, date):
+    try:
+        items = json.loads(item_dict)  # Python list of dicts
+        created_boxes = []
+        created_items = []  # Track items with boxes created
+
+        for item in items:
+            divide = int(item.get("divide", 0))
+            full_box = int(item.get("full_box", 0))
+            item_code = item.get("item_code")
+            batch_no = item.get("batch_no")
+            warehouse = item.get("warehouse")
+            barcode_qty = int(item.get("barcode_qty", 0))
+            custom_barcodes = item.get("custom_barcodes", "")
+            remaining_box = float(item.get("remaining_box", 0))
+            remaining_barcode = round(remaining_box * divide)
+
+            # Normalize custom_barcodes into a list (newline-separated in your case)
+            if isinstance(custom_barcodes, str):
+                barcodes_list = [b.strip() for b in custom_barcodes.split("\n") if b.strip()]
+            elif isinstance(custom_barcodes, list):
+                barcodes_list = custom_barcodes
+            else:
+                barcodes_list = []
+
+            # --- Barcode count validation ---
+            required_barcode_count = (full_box * divide) + remaining_barcode
+            if len(barcodes_list) < required_barcode_count:
+                frappe.throw(
+                    f"Not enough barcodes provided for item {item_code}. "
+                    f"Required: {required_barcode_count}, Provided: {len(barcodes_list)}"
+                )
+
+            barcode_index = 0  # Track which barcode we're on
+            boxes_for_this_item = []  # Track boxes for this item
+
+            # --- Create full box entries ---
+            for _ in range(full_box):
+                box_doc = frappe.new_doc("Box Creation")
+                box_doc.box_qty = divide
+                box_doc.barcode_selection = "Based On Stock Entry"
+                box_doc.reference_of_stock_entry = stock_entry
+
+                for _ in range(divide):
+                    box_doc.append("table_mrql", {
+                        "item_code": item_code,
+                        "batch": batch_no,
+                        "warehouse": warehouse,
+                        "manufacturing_date": date,
+                        "barcode_reference": barcodes_list[barcode_index]
+                    })
+                    barcode_index += 1
+
+                box_doc.insert(ignore_permissions=True)
+                box_doc.submit()
+                created_boxes.append(box_doc.name)
+                boxes_for_this_item.append(box_doc.name)
+
+            # --- Create remaining box entry (if applicable) ---
+            if remaining_barcode > 0:
+                box_doc = frappe.new_doc("Box Creation")
+                box_doc.box_qty = remaining_barcode
+                box_doc.barcode_selection = "Based On Stock Entry"
+                box_doc.reference_of_stock_entry = stock_entry
+
+                for _ in range(remaining_barcode):
+                    box_doc.append("table_mrql", {
+                        "item_code": item_code,
+                        "batch": batch_no,
+                        "warehouse": warehouse,
+                        "manufacturing_date": date,
+                        "barcode_reference": barcodes_list[barcode_index]
+                    })
+                    barcode_index += 1
+
+                box_doc.insert(ignore_permissions=True)
+                box_doc.submit()
+                created_boxes.append(box_doc.name)
+                boxes_for_this_item.append(box_doc.name)
+
+            # If any boxes were created for this item, add to created_items list
+            if boxes_for_this_item:
+                created_items.append({
+                    "item_code": item_code,
+                    "batch_no":batch_no,
+                    "boxes": boxes_for_this_item
+                })
+                for ci in created_items:
+                    box_reference = "\n".join(ci["boxes"])
+                    frappe.db.set_value("Stock Entry Detail",{"parent":stock_entry,"item_code":ci["item_code"],"batch_no":ci["batch_no"]},"custom_box_reference",box_reference)
+
+        return {
+            "message": f"Created {len(created_boxes)} Box Creation entries",
+            "boxes": created_boxes,
+            "created_items": created_items
+        }
+    except:
+        frappe.log_error("Box Creation Failed",frappe.get_traceback())
+        frappe.throw("An error occurred while creating box creation. Please check error logs.")
