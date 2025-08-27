@@ -131,17 +131,24 @@ def create_barcode_entry(doc):
 
 @frappe.whitelist()
 def get_items(doc_name):
-
     get_items = frappe.db.sql("""
-    select item_code,qty,batch_no,t_warehouse,custom_barcodes,length(custom_barcodes) - length(replace(custom_barcodes, '\n', '')) + 1 as barcode_count
-    from `tabStock Entry Detail`
-    where parent = %s and custom_barcodes is not null AND custom_box_reference in (null,'')  
-    order by idx
-    """, (doc_name), as_dict=1)
+        SELECT item_code,
+               qty,
+               batch_no,
+               t_warehouse,
+               custom_barcodes,
+               LENGTH(custom_barcodes) - LENGTH(REPLACE(custom_barcodes, '\n', '')) + 1 AS barcode_count
+        FROM `tabStock Entry Detail`
+        WHERE parent = %s
+          AND custom_barcodes IS NOT NULL
+          AND (custom_box_reference IS NULL OR custom_box_reference = '')
+        ORDER BY idx
+    """, doc_name, as_dict=1)
 
     if not get_items:
         frappe.throw("All items must have boxes created or barcodes do not exist for box creation.")
     return get_items
+
                              
 
 
