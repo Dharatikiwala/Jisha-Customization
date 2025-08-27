@@ -16,6 +16,189 @@ frappe.ui.form.on('Stock Entry', {
                 });
             });
         }
+
+        // Check if any item in frm.doc.items has custom_barcodes value
+        var hasCustomBarcodes = frm.doc.items.some(item => !!item.custom_barcodes);
+        if(frm.doc.docstatus === 1 && hasCustomBarcodes) {
+            frm.add_custom_button("Create Box", function() {
+                frappe.call({
+                    method: "jisha_customization.jisha_customization.override.stock_entry.get_items",
+                    args: {
+                        "doc_name": frm.doc.name
+                    },
+                    freeze:true,
+                    callback: function(r) {
+                        if(r.message){
+                            // create dialog box where we can add data of r.meesage in child table
+                            var fields = [
+                                
+                                {
+                                    fieldtype: "Table",
+                                    fieldname: "items_table",
+                                    label: "Items",
+                                    fields: [
+                                        {
+                                            fieldtype: "Data",
+                                            fieldname: "item_code",
+                                            label: "Item Code",
+                                            read_only: 1,
+                                            in_list_view: 1,
+                                            columns: 2
+                                        },
+                                        {
+                                            fieldtype: "Link",
+                                            fieldname: "batch_no",
+                                            label: "Batch",
+                                            read_only: 1,
+                                            in_list_view: 1,
+                                            columns: 1
+                                        },
+                                        {
+                                            fieldtype: "Float",
+                                            fieldname: "qty",
+                                            label: "Qty",
+                                            read_only: 1,
+                                            in_list_view: 1,
+                                            columns: 1
+                                        },
+                                        {
+                                            fieldtype: "Int",
+                                            fieldname: "barcode_qty",
+                                            label: "Barcode Qty",
+                                            read_only: 1,
+                                            in_list_view: 1,
+                                            columns: 1
+                                        },
+                                        {
+                                            fieldtype: "Int",
+                                            fieldname: "divide",
+                                            label: "Divide",
+                                            in_list_view: 1,
+                                            columns: 1,
+                                            onchange: function () {
+                                                const divide = this.get_value();
+                                                console.log(divide);
+                                                const barcode_qty = this.grid_row.on_grid_fields_dict.barcode_qty.get_value();
+                                                if(divide <= 0){
+                                                    frappe.msgprint("Divide value must be greater than 0.");
+                                                    return;
+                                                }
+
+                                                if (divide && barcode_qty) {
+                                                    const full_box_val = barcode_qty / divide;
+                                                    // Integer part
+                                                    const full_box = Math.floor(full_box_val);
+                                                    // Fractional part
+                                                    const remaining_box = +(full_box_val - full_box).toFixed(5);
+
+                                                    this.grid_row.on_grid_fields_dict.full_box.set_value(full_box);
+                                                    this.grid_row.on_grid_fields_dict.remaining_box.set_value(remaining_box);
+                                                } else {
+                                                    this.grid_row.on_grid_fields_dict.full_box.set_value(0);
+                                                    this.grid_row.on_grid_fields_dict.remaining_box.set_value(0);
+                                                }
+                                            }
+
+                                        },
+                                        {
+                                            fieldtype: "Int",
+                                            fieldname: "full_box",
+                                            label: "Full Box",
+                                            in_list_view: 1,
+                                            columns: 1
+                                        },
+                                        {
+                                            fieldtype: "Float",
+                                            fieldname: "remaining_box",
+                                            label: "Remaining Box",
+                                            in_list_view: 1,
+                                            columns: 1
+                                        },
+                                        // {
+                                        //     fieldtype: "small_text",
+                                        //     fieldname: "custom_barcodes",
+                                        //     label: "Custom Barcodes",
+                                        //     in_list_view: 0
+                                        // }
+                                    ]
+                                }
+                            ];
+
+                            var dialog = new frappe.ui.Dialog({
+                                title: "Items",
+                                fields: fields,
+                                 size: 'extra-large',
+                                primary_action_label: "Create Box",
+                                primary_action(values) {
+                                    let selected_items = values.items_table.filter(item => item.divide > 0 && item.full_box > 0);
+                                    if (selected_items.length === 0) {
+                                        frappe.msgprint({
+                                            title: __("No Items Selected"),
+                                            message: __("Please select at least one item with 'divide' > 0 and 'full_box' > 0."),
+                                            indicator: "red"
+                                        });
+                                        return;
+                                    }
+                                    frappe.call({
+                                        method: "jisha_customization.jisha_customization.override.stock_entry.create_box_creation",
+                                        args: {
+                                            "item_dict": JSON.stringify(selected_items),
+                                            "stock_entry": frm.doc.name,
+                                            "date":frm.doc.posting_date
+                                        },
+                                        freeze:true,
+                                        freeze_message: __("Creating Box..."),
+                                        callback: function(r) {
+                                            console.log(r.message)
+                                            if (r.message && r.message.created_items) {
+                                                let msg = r.message.created_items.map(item => {
+                                                    return `<b>${item.item_code}</b>: ${item.boxes.join(", ")}`;
+                                                }).join("<br>");
+
+                                                frappe.msgprint({
+                                                    title: __("Box Creation Summary"),
+                                                    message: msg,
+                                                    indicator: 'green'
+                                                });
+                                            }
+                                        }
+                                    });
+
+                                    dialog.hide()
+                                }
+                            });
+
+                            // Populate child table with data from r.message
+                            if (Array.isArray(r.message)) {
+                                let table_field = dialog.fields_dict.items_table;
+
+                                // Ensure the table has data array
+                                if (!table_field.df.data) {
+                                    table_field.df.data = [];
+                                }
+
+                                r.message.forEach(function(item) {
+                                    table_field.df.data.push({
+                                        item_code: item.item_code,
+                                        batch_no:item.batch_no,
+                                        qty: item.qty,
+                                        warehouse:item.t_warehouse,
+                                        barcode_qty: item.barcode_count,
+                                        custom_barcodes: item.custom_barcodes || "",
+                                    });
+                                });
+
+                                table_field.refresh();
+                            }
+
+                            dialog.show();
+
+
+                        }
+                    }
+                });
+            });
+        }
     },
 
     custom_scan_barcodes: function(frm) {
