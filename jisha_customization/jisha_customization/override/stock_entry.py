@@ -200,7 +200,7 @@ def create_box_creation(item_dict, stock_entry, date):
                     barcode_index += 1
 
                 box_doc.insert(ignore_permissions=True)
-                # box_doc.submit()
+                box_doc.submit()
                 created_boxes.append(box_doc.name)
                 boxes_for_this_item.append(box_doc.name)
 
@@ -222,7 +222,7 @@ def create_box_creation(item_dict, stock_entry, date):
                     barcode_index += 1
 
                 box_doc.insert(ignore_permissions=True)
-                # box_doc.submit()
+                box_doc.submit()
                 created_boxes.append(box_doc.name)
                 boxes_for_this_item.append(box_doc.name)
 
