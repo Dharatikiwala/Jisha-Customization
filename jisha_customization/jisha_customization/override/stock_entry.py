@@ -6,8 +6,8 @@ def on_submit(self,method):
 
     if self.items and self.stock_entry_type == "Material Transfer":
         for item in self.items:
-            if item.custom_barcodes:
-                barcodes = [barcode.strip() for barcode in item.custom_barcodes.split("\n") if barcode.strip()]
+            if item.custom_barcodes_v1:
+                barcodes = [barcode.strip() for barcode in item.custom_barcodes_v1.split("\n") if barcode.strip()]
                 for barcode in barcodes:
                     frappe.db.set_value("Barcode Entry", barcode, "warehouse", item.t_warehouse)
 
@@ -15,8 +15,8 @@ def on_cancel(self,method):
 
     if self.items and self.stock_entry_type == "Material Transfer":
         for item in self.items:
-            if item.custom_barcodes:
-                barcodes = [barcode.strip() for barcode in item.custom_barcodes.split("\n") if barcode.strip()]
+            if item.custom_barcodes_v1:
+                barcodes = [barcode.strip() for barcode in item.custom_barcodes_v1.split("\n") if barcode.strip()]
                 for barcode in barcodes:
                     frappe.db.set_value("Barcode Entry", barcode, "warehouse", item.s_warehouse)
 
@@ -105,7 +105,7 @@ def create_barcode_entry(doc):
             key = (entry["item_code"], entry["batch"])
             item_batch_map.setdefault(key, []).append(name)
 
-        # Update Stock Entry Detail's custom_barcodes field
+        # Update Stock Entry Detail's custom_barcodes_v1 field
         for (item_code, batch), barcodes in item_batch_map.items():
             filters = {
                 "parent": doc.get("name"),
@@ -118,7 +118,7 @@ def create_barcode_entry(doc):
             frappe.db.set_value(
                 "Stock Entry Detail",
                 filters,
-                "custom_barcodes",
+                "custom_barcodes_v1",
                 combined_barcodes
             )
 
@@ -129,6 +129,8 @@ def create_barcode_entry(doc):
         frappe.log_error(frappe.get_traceback(), "Barcode Entry Creation Failed")
         frappe.throw("An error occurred while creating barcode entries. Please check error logs.")
 
+
+
 @frappe.whitelist()
 def get_items(doc_name):
     get_items = frappe.db.sql("""
@@ -136,11 +138,11 @@ def get_items(doc_name):
                qty,
                batch_no,
                t_warehouse,
-               custom_barcodes,
-               LENGTH(custom_barcodes) - LENGTH(REPLACE(custom_barcodes, '\n', '')) + 1 AS barcode_count
+               custom_barcodes_v1,
+               LENGTH(custom_barcodes_v1) - LENGTH(REPLACE(custom_barcodes_v1, '\n', '')) + 1 AS barcode_count
         FROM `tabStock Entry Detail`
         WHERE parent = %s
-          AND custom_barcodes IS NOT NULL
+          AND custom_barcodes_v1 IS NOT NULL
           AND (custom_box_reference IS NULL OR custom_box_reference = '')
         ORDER BY idx
     """, doc_name, as_dict=1)
@@ -166,15 +168,15 @@ def create_box_creation(item_dict, stock_entry, date):
             batch_no = item.get("batch_no")
             warehouse = item.get("warehouse")
             barcode_qty = int(item.get("barcode_qty", 0))
-            custom_barcodes = item.get("custom_barcodes", "")
+            custom_barcodes_v1 = item.get("custom_barcodes_v1", "")
             remaining_box = float(item.get("remaining_box", 0))
             remaining_barcode = round(remaining_box * divide)
 
-            # Normalize custom_barcodes into a list (newline-separated in your case)
-            if isinstance(custom_barcodes, str):
-                barcodes_list = [b.strip() for b in custom_barcodes.split("\n") if b.strip()]
-            elif isinstance(custom_barcodes, list):
-                barcodes_list = custom_barcodes
+            # Normalize custom_barcodes_v1 into a list (newline-separated in your case)
+            if isinstance(custom_barcodes_v1, str):
+                barcodes_list = [b.strip() for b in custom_barcodes_v1.split("\n") if b.strip()]
+            elif isinstance(custom_barcodes_v1, list):
+                barcodes_list = custom_barcodes_v1
             else:
                 barcodes_list = []
 
