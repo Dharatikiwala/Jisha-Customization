@@ -17,8 +17,8 @@ frappe.ui.form.on('Stock Entry', {
             });
         }
 
-        // Check if any item in frm.doc.items has custom_barcodes value
-        var hasCustomBarcodes = frm.doc.items.some(item => !!item.custom_barcodes);
+        // Check if any item in frm.doc.items has custom_barcodes_v1 value
+        var hasCustomBarcodes = frm.doc.items.some(item => !!item.custom_barcodes_v1);
         if(frm.doc.docstatus === 1 && hasCustomBarcodes) {
             frm.add_custom_button("Create Box", function() {
                 frappe.call({
@@ -116,7 +116,7 @@ frappe.ui.form.on('Stock Entry', {
                                         },
                                         // {
                                         //     fieldtype: "small_text",
-                                        //     fieldname: "custom_barcodes",
+                                        //     fieldname: "custom_barcodes_v1",
                                         //     label: "Custom Barcodes",
                                         //     in_list_view: 0
                                         // }
@@ -184,7 +184,7 @@ frappe.ui.form.on('Stock Entry', {
                                         qty: item.qty,
                                         warehouse:item.t_warehouse,
                                         barcode_qty: item.barcode_count,
-                                        custom_barcodes: item.custom_barcodes || "",
+                                        custom_barcodes_v1: item.custom_barcodes_v1 || "",
                                     });
                                 });
 
@@ -243,8 +243,8 @@ frappe.ui.form.on('Stock Entry', {
                                 existingRow.qty += parseFloat(barcode_data.box_qty) || 1;
 
                                 // ✅ Append barcodes only if not already in the list
-                                let existingBarcodes = existingRow.custom_barcodes
-                                    ? existingRow.custom_barcodes.split("\n")
+                                let existingBarcodes = existingRow.custom_barcodes_v1
+                                    ? existingRow.custom_barcodes_v1.split("\n")
                                     : [];
 
                                 barcode_data.table_mrql.forEach(function(row) {
@@ -253,7 +253,7 @@ frappe.ui.form.on('Stock Entry', {
                                     }
                                 });
 
-                                existingRow.custom_barcodes = existingBarcodes.join("\n");
+                                existingRow.custom_barcodes_v1 = existingBarcodes.join("\n");
                                 frm.refresh_field("items");
                                 frm.set_value("custom_scan_barcodes", "");
                                 frm.save();
@@ -262,7 +262,7 @@ frappe.ui.form.on('Stock Entry', {
 
                             // 🔽 If no matching row, proceed to add new row
                             var barcodeExists = frm.doc.items.some(function(item) {
-                                return item.custom_barcodes === barcodes;
+                                return item.custom_barcodes_v1 === barcodes;
                             });
 
                             if (barcodeExists) {
@@ -287,7 +287,7 @@ frappe.ui.form.on('Stock Entry', {
                                 row.batch_no = child_data[0].batch;
                                 row.qty = barcode_data.box_qty;
                                 row.custom_box_creation_reference = barcode_data.name;
-                                row.custom_barcodes = barcodes;
+                                row.custom_barcodes_v1 = barcodes;
                                 row.use_serial_batch_fields = 1;
 
                                 cur_frm.script_manager.trigger("item_code", row.doctype, row.name);
@@ -299,7 +299,7 @@ frappe.ui.form.on('Stock Entry', {
                         else {
                             // Keep your else block unchanged as per your instruction
                             var barcodeExistsIndex = frm.doc.items.findIndex(function(item) {
-                                var barcodesArray = item.custom_barcodes ? item.custom_barcodes.split("\n") : [];
+                                var barcodesArray = item.custom_barcodes_v1 ? item.custom_barcodes_v1.split("\n") : [];
                                 return barcodesArray.includes(barcode_data.name);
                             });
                             if (barcodeExistsIndex !== -1) {
@@ -314,7 +314,7 @@ frappe.ui.form.on('Stock Entry', {
 
                             if (existingRow) {
                                 existingRow.qty += 1;
-                                existingRow.custom_barcodes += `\n${barcode_data.name}`;
+                                existingRow.custom_barcodes_v1 += `\n${barcode_data.name}`;
                                 frm.refresh_field("items");
                             } else {
                                 let row;
@@ -333,7 +333,7 @@ frappe.ui.form.on('Stock Entry', {
                                 row.s_warehouse = barcode_data.warehouse;
                                 row.batch_no = barcode_data.batch;
                                 row.qty = parseFloat(barcode_data.item_qty);
-                                row.custom_barcodes = barcode_data.name;
+                                row.custom_barcodes_v1 = barcode_data.name;
                                 row.use_serial_batch_fields = 1;
 
                                 cur_frm.script_manager.trigger("item_code", row.doctype, row.name);
