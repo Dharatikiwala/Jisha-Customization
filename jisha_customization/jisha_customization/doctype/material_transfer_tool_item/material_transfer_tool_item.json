@@ -1,0 +1,140 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-17 11:29:07.940889",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "material_request",
+  "material_request_item",
+  "branch",
+  "column_break_2urr",
+  "mr_date",
+  "mr_qty",
+  "barcode_qty",
+  "pending_qty",
+  "section_break_ls5w",
+  "batch",
+  "column_break_xmj1",
+  "target_warehouse",
+  "source_warehouse",
+  "section_break_atrv",
+  "barcodes",
+  "column_break_15mf",
+  "boxes"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item"
+  },
+  {
+   "fieldname": "material_request",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Material Request",
+   "options": "Material Request"
+  },
+  {
+   "fieldname": "material_request_item",
+   "fieldtype": "Data",
+   "label": "Material Request Item"
+  },
+  {
+   "fieldname": "mr_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "MR Date"
+  },
+  {
+   "fieldname": "mr_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "MR Qty"
+  },
+  {
+   "fieldname": "barcode_qty",
+   "fieldtype": "Float",
+   "label": "Barcode Qty"
+  },
+  {
+   "fieldname": "pending_qty",
+   "fieldtype": "Float",
+   "label": "Pending Qty"
+  },
+  {
+   "fieldname": "batch",
+   "fieldtype": "Link",
+   "label": "Batch",
+   "options": "Batch"
+  },
+  {
+   "fieldname": "column_break_2urr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ls5w",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_xmj1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_atrv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "barcodes",
+   "fieldtype": "Long Text",
+   "label": "Barcodes"
+  },
+  {
+   "fieldname": "column_break_15mf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "boxes",
+   "fieldtype": "Long Text",
+   "label": "Boxes"
+  },
+  {
+   "fieldname": "target_warehouse",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Target Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "source_warehouse",
+   "fieldtype": "Link",
+   "label": "Source Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-09-17 17:33:38.161260",
+ "modified_by": "Administrator",
+ "module": "Jisha Customization",
+ "name": "Material Transfer Tool Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
