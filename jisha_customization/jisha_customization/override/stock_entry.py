@@ -6,19 +6,50 @@ def on_submit(self,method):
 
     if self.items and self.stock_entry_type == "Material Transfer":
         for item in self.items:
+            # ✅ Handle Barcode Entry update
             if item.custom_barcodes_v1:
                 barcodes = [barcode.strip() for barcode in item.custom_barcodes_v1.split("\n") if barcode.strip()]
                 for barcode in barcodes:
                     frappe.db.set_value("Barcode Entry", barcode, "warehouse", item.t_warehouse)
+            
+            # ✅ Handle Box Creation update
+            if item.custom_box_reference:
+                boxes = [box.strip() for box in item.custom_box_reference.split("\n") if box.strip()]
+                for box in boxes:
+                    if frappe.db.exists("Box Creation", box):
+                        # Fetch child rows (table_mrql)
+                        child_rows = frappe.db.get_all(
+                            "Barcode Box",
+                            filters={"parent": box},
+                            fields=["name"]
+                        )
+                        for row in child_rows:
+                            frappe.db.set_value("Barcode Box", row.name, "warehouse", item.t_warehouse)
+
 
 def on_cancel(self,method):
 
     if self.items and self.stock_entry_type == "Material Transfer":
+        # ✅ Handle Barcode Entry update
         for item in self.items:
             if item.custom_barcodes_v1:
                 barcodes = [barcode.strip() for barcode in item.custom_barcodes_v1.split("\n") if barcode.strip()]
                 for barcode in barcodes:
                     frappe.db.set_value("Barcode Entry", barcode, "warehouse", item.s_warehouse)
+
+            # ✅ Handle Box Creation update
+            if item.custom_box_reference:
+                boxes = [box.strip() for box in item.custom_box_reference.split("\n") if box.strip()]
+                for box in boxes:
+                    if frappe.db.exists("Box Creation", box):
+                        # Fetch child rows (table_mrql)
+                        child_rows = frappe.db.get_all(
+                            "Barcode Box",
+                            filters={"parent": box},
+                            fields=["name"]
+                        )
+                        for row in child_rows:
+                            frappe.db.set_value("Barcode Box", row.name, "warehouse", item.s_warehouse)
 
 def before_save(self,method):
     entry_type = frappe.db.get_value("Stock Entry Type", self.stock_entry_type,"purpose")
@@ -62,6 +93,7 @@ def create_barcode_entry(doc):
         settings = frappe.get_single("Jisha Settings")
         if not settings.item_group or not settings.qty:
             frappe.msgprint("Please set both Item Group and Additional Qty in Jisha Settings")
+            return
 
         # Get allowed item groups including sub-groups
         allowed_item_groups = {settings.item_group}
