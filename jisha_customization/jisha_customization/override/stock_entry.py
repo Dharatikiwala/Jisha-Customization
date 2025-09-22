@@ -14,15 +14,15 @@ def on_submit(self,method):
             
             # ✅ Handle Box Creation update
             if item.custom_box_reference:
-                boxes = [box.strip() for box in item.custom_box_reference.split("\n") if box.strip()]
-                for box in boxes:
-                    if frappe.db.exists("Box Creation", box):
-                        # Fetch child rows (table_mrql)
-                        child_rows = frappe.db.get_all(
-                            "Barcode Box",
-                            filters={"parent": box},
-                            fields=["name"]
-                        )
+                boxes = [b.strip() for b in item.custom_box_reference.split("\n") if b.strip()]
+                if boxes:
+                    # Fetch all Barcode Box child rows in one go
+                    child_rows = frappe.db.get_all(
+                        "Barcode Box",
+                        filters={"parent": ["in", boxes]},
+                        fields=["name"]
+                    )
+                    if child_rows:
                         for row in child_rows:
                             frappe.db.set_value("Barcode Box", row.name, "warehouse", item.t_warehouse)
 
@@ -39,15 +39,15 @@ def on_cancel(self,method):
 
             # ✅ Handle Box Creation update
             if item.custom_box_reference:
-                boxes = [box.strip() for box in item.custom_box_reference.split("\n") if box.strip()]
-                for box in boxes:
-                    if frappe.db.exists("Box Creation", box):
-                        # Fetch child rows (table_mrql)
-                        child_rows = frappe.db.get_all(
-                            "Barcode Box",
-                            filters={"parent": box},
-                            fields=["name"]
-                        )
+                boxes = [b.strip() for b in item.custom_box_reference.split("\n") if b.strip()]
+                if boxes:
+                    # Fetch all Barcode Box child rows in one go
+                    child_rows = frappe.db.get_all(
+                        "Barcode Box",
+                        filters={"parent": ["in", boxes]},
+                        fields=["name"]
+                    )
+                    if child_rows:
                         for row in child_rows:
                             frappe.db.set_value("Barcode Box", row.name, "warehouse", item.s_warehouse)
 

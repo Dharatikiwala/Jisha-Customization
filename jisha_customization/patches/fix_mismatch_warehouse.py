@@ -3,10 +3,9 @@ import frappe
 def execute():
     """
     Patch: Sync Barcode Box.warehouse with Barcode Entry.warehouse
-    - Processes in batches and logs progress.
+    - Uses a for-loop with fixed iterations to avoid infinite loops.
     """
     batch_size = 1000
-    offset = 0
     total_updated = 0
 
     # Count total mismatches upfront for progress tracking
@@ -20,7 +19,10 @@ def execute():
 
     print(f"Total mismatches to fix: {total_mismatches}")
 
-    while True:
+    # Calculate how many batches we need
+    total_batches = -(-total_mismatches // batch_size)  # ceiling division
+
+    for batch_no in range(total_batches):
         mismatches = frappe.db.sql("""
             SELECT 
                 be.name AS barcode,
@@ -34,7 +36,7 @@ def execute():
             INNER JOIN `tabBox Creation` bc 
                 ON bc.name = bb.parent
             WHERE be.reference_of_box IS NOT NULL
-            AND IFNULL(be.warehouse, '') != IFNULL(bb.warehouse, '')
+              AND IFNULL(be.warehouse, '') != IFNULL(bb.warehouse, '')
             LIMIT %(limit)s
         """, {"limit": batch_size}, as_dict=1)
 
@@ -53,7 +55,8 @@ def execute():
             total_updated += 1
 
         frappe.db.commit()
-    
+        print(f"Batch {batch_no + 1}/{total_batches}: Updated {len(mismatches)} rows (Total so far: {total_updated})")
+
     frappe.log_error(
         title="Patch completed: Barcode→Box warehouse sync",
         message=f"Total mismatched rows updated: {total_updated} / {total_mismatches}"
