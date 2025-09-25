@@ -83,7 +83,6 @@ def get_barcode_data(barcode_data):
 	# If not found in either, return a proper error message
 	return {"status": "error", "message": f"Barcode '{barcode_data}' not found"}
 
-
 @frappe.whitelist()
 def create_mt(items):
 	try:
@@ -92,6 +91,29 @@ def create_mt(items):
 		if not items:
 			frappe.throw("No item data found for Material Transfer creation.")
 
+		# ✅ Check if today's draft Stock Entry already exists
+		stock_entry = frappe.db.get_value(
+			"Stock Entry",
+			{
+				"posting_date": frappe.utils.today(),
+				"stock_entry_type": "Material Transfer",
+				"docstatus": 0,   # Draft
+			},
+			"name"
+		)
+
+		if stock_entry:
+			# Load existing draft
+			stock_doc = frappe.get_doc("Stock Entry", stock_entry)
+		else:
+			# Create new draft Stock Entry
+			stock_doc = frappe.new_doc("Stock Entry")
+			stock_doc.update({
+				"posting_date": frappe.utils.today(),
+				"stock_entry_type": "Material Transfer"
+			})
+
+		# ✅ Check duplicates first
 		for item in items:
 			exists = frappe.db.exists(
 				"Stock Entry Detail",
@@ -102,30 +124,23 @@ def create_mt(items):
 					"batch_no": item.get("batch"),
 					"qty": item.get("barcode_qty"),
 					"material_request": item.get("material_request"),
-				    "material_request_item": item.get("material_request_item"),
+					"material_request_item": item.get("material_request_item"),
+					"parent": stock_doc.name if stock_doc.name else None,
 					"parenttype": "Stock Entry",
 				},
 			)
 
 			if exists:
-				# Get Stock Entry No (parent field of Stock Entry Detail)
-				stock_entry = frappe.db.get_value("Stock Entry Detail", exists, "parent")
 				return {
 					"status": "error",
 					"message": (
 						f"Duplicate entry detected: Item {frappe.bold(item.get('item_code'))} "
 						f"(Batch {frappe.bold(item.get('batch'))}, Qty {frappe.bold(item.get('barcode_qty'))}) "
-						f"with same Barcodes/Boxes already exists in Stock Entry {frappe.bold(stock_entry)}."
+						f"already exists in Stock Entry {frappe.bold(stock_doc.name)}."
 					)
 				}
 
-		# ✅ Create new Stock Entry
-		stock_doc = frappe.new_doc("Stock Entry")
-		stock_doc.update({
-			"posting_date": frappe.utils.today(),
-			"stock_entry_type": "Material Transfer"
-		})
-
+		# ✅ Append new items
 		for item in items:
 			stock_doc.append("items", {
 				"item_code": item.get("item_code"),
@@ -140,14 +155,12 @@ def create_mt(items):
 				"branch": item.get("branch")
 			})
 
-		stock_doc.insert(ignore_permissions=True)
-		# stock_doc.submit()
+		# Save (insert if new, update if existing)
+		stock_doc.save(ignore_permissions=True)
 
-		return {"status": "success", "message": f"Material Transfer {stock_doc.name} created successfully."}
+		return {"status": "success", "message": f"Material Transfer {stock_doc.name} updated successfully."}
 
 	except Exception as e:
 		frappe.db.rollback()
 		frappe.log_error(frappe.get_traceback(), "Material Transfer Creation Failed")
 		return {"status": "error", "message": f"Failed to create Material Transfer: {str(e)}"}
-
-

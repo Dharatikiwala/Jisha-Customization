@@ -13,7 +13,7 @@ def execute(filters=None):
 	to_date = getdate(filters.get("to_date"))
 	
 	columns = [
-		{"label": "Item Name", "fieldname": "item_name", "fieldtype": "Data", "width": 200},
+		{"label": "Item Name", "fieldname": "item_name", "fieldtype": "Link", "options":"Item" ,"width": 200},
 		{"label": "Warehouse", "fieldname": "warehouse_group", "fieldtype": "Data", "width": 200},
 		{"label": "Reorder Level", "fieldname": "reorder_level", "fieldtype": "Float", "width": 140},
 		{"label": "Opening Qty", "fieldname": "opening_qty", "fieldtype": "Float", "width": 140},
@@ -72,7 +72,7 @@ def execute(filters=None):
 		balance_qty = (opening_qty + received_qty) - (issued_qty)
 		second_balance_qty = ordered_qty - transferred_qty
 		
-		if reorder_level > balance_qty:
+		if second_balance_qty > 0 or (second_balance_qty < 0 and reorder_level > balance_qty):
 			data.append({
 				"item_name": item.name,
 				"warehouse_group": item.warehouse_group,
