@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-03 17:16:31.502459",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "warehouse_qty",
+  "column_break_gxqe",
+  "barcode_qty",
+  "variance_qty",
+  "section_break_3n7d",
+  "batch",
+  "section_break_3cge",
+  "barcodes",
+  "column_break_t14x",
+  "boxes"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "warehouse_qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Warehouse Qty",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "barcode_qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Barcode Qty"
+  },
+  {
+   "columns": 2,
+   "fieldname": "variance_qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Variance Qty"
+  },
+  {
+   "fieldname": "batch",
+   "fieldtype": "Long Text",
+   "label": "Batch"
+  },
+  {
+   "fieldname": "barcodes",
+   "fieldtype": "Long Text",
+   "label": "Barcodes"
+  },
+  {
+   "fieldname": "boxes",
+   "fieldtype": "Long Text",
+   "label": "Boxes"
+  },
+  {
+   "fieldname": "column_break_gxqe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_3n7d",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_3cge",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_t14x",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-03 17:18:32.945991",
+ "modified_by": "Administrator",
+ "module": "Jisha Customization",
+ "name": "Stock Audit Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
