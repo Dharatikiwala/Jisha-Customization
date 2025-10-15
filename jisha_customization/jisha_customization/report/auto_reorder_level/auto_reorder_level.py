@@ -1,5 +1,5 @@
-# Copyright (c) 2025, Akhilam Inc. and contributors
-# For license information, please see license.txt
+# # Copyright (c) 2025, Akhilam Inc. and contributors
+# # For license information, please see license.txt
 
 import frappe
 from frappe.utils import getdate
@@ -26,31 +26,32 @@ def execute(filters=None):
 	]
 	
 	# Build query conditions dynamically
-	conditions = ["i.disabled = 0", "ir.reorder_qty IS NOT NULL"]
+	conditions = "i.disabled = 0 AND ir.reorder_qty > 0"
 	params = []
-	
+
 	filter_map = {
 		"warehouse": "ir.warehouse_group = %s",
 		"item_code": "i.name = %s",
 		"item_group": "i.item_group = %s"
 	}
-	
-	# Add conditions based on provided filters
+
+	# Dynamically add conditions if filters exist
 	for filter_key, condition in filter_map.items():
 		if filters.get(filter_key):
-			conditions.append(condition)
+			conditions += f" AND {condition}"
 			params.append(filters.get(filter_key))
-	
-	# Construct the query
-	query = """
-	SELECT 
-		i.name, 
-		ir.warehouse_group
-	FROM `tabItem` i 
-	LEFT JOIN `tabItem Reorders` ir ON ir.parent = i.name 
-	WHERE {0}
-	""".format(" AND ".join(conditions))
-	
+
+	# Construct the final query
+	query = f"""
+		SELECT 
+			i.name, 
+			ir.warehouse_group
+		FROM `tabItem` i 
+		LEFT JOIN `tabItem Reorders` ir ON ir.parent = i.name 
+		WHERE {conditions}
+	"""
+
+	# Execute query safely
 	items = frappe.db.sql(query, tuple(params), as_dict=True)
 	
 	if not items:
@@ -58,34 +59,42 @@ def execute(filters=None):
 		return columns, []
 	
 	data = []
-	
+
+
+	condition_apply = frappe.db.get_single_value("Jisha Settings", "auto_reorder_condition")
+
 	for item in items:
 		reorder_level = get_reorder_level(item.name)
 		warehouse_data = get_warehouse_group_list(item.warehouse_group)
+
 		opening_qty = get_closing_qty(item.name, from_date, warehouse_data)
 		received_qty = get_received_qty(item.name, from_date, to_date, warehouse_data)
 		issued_qty = get_issued_qty(item.name, from_date, to_date, warehouse_data)
 		ordered_qty = get_order_qty(item.name, from_date, to_date, warehouse_data)
 		transferred_qty = get_transferred_qty(item.name, from_date, to_date, warehouse_data)
-		
-		# balance_qty = (opening_qty + received_qty) - (issued_qty + transferred_qty)
-		balance_qty = (opening_qty + received_qty) - (issued_qty)
-		second_balance_qty = ordered_qty - transferred_qty
-		
-		if second_balance_qty > 0 or (second_balance_qty < 0 and reorder_level > balance_qty):
-			data.append({
-				"item_name": item.name,
-				"warehouse_group": item.warehouse_group,
-				"reorder_level": reorder_level,
-				"opening_qty": opening_qty,
-				"received_qty": received_qty,
-				"issued_qty": issued_qty,
-				"ordered_qty": ordered_qty,
-				"transferred_qty": transferred_qty,
-				"balance_qty": balance_qty,
-				"second_balance_qty": second_balance_qty
 
-			})
+		balance_qty = (opening_qty + received_qty) - issued_qty
+		second_balance_qty = ordered_qty - transferred_qty
+
+		# Create the row once (avoid duplication)
+		row = {
+			"item_name": item.name,
+			"warehouse_group": item.warehouse_group,
+			"reorder_level": reorder_level,
+			"opening_qty": opening_qty,
+			"received_qty": received_qty,
+			"issued_qty": issued_qty,
+			"ordered_qty": ordered_qty,
+			"transferred_qty": transferred_qty,
+			"balance_qty": balance_qty,
+			"second_balance_qty": second_balance_qty
+		}
+
+		# Apply condition only if required
+		if not condition_apply or second_balance_qty > 0 or (
+			second_balance_qty < 0 and reorder_level > balance_qty
+		):
+			data.append(row)
 	
 	return columns, data
 
@@ -105,88 +114,6 @@ def get_closing_qty(item, date,warehouse_data):
 		""", (item, date, tuple(warehouse_data)))
 	return qty[0][0] if qty and qty[0][0] else 0
 
-
-# def get_received_qty(item, from_date, to_date, warehouse_data):
-# 	qty = frappe.db.sql(
-# 		"""
-# 		SELECT
-# 		COALESCE((
-# 			SELECT SUM(pri.qty)
-# 			FROM `tabPurchase Receipt Item` pri
-# 			INNER JOIN `tabPurchase Receipt` pr ON pri.parent = pr.name
-# 			WHERE pri.item_code = %s
-# 			AND pri.warehouse IN %s
-# 			AND pr.posting_date BETWEEN %s AND %s
-# 			AND pr.docstatus = 1
-# 		), 0) +
-
-# 		COALESCE((
-# 			SELECT SUM(sed.qty)
-# 			FROM `tabStock Entry Detail` sed
-# 			INNER JOIN `tabStock Entry` se ON sed.parent = se.name
-# 			WHERE sed.item_code = %s
-# 			AND sed.t_warehouse IN %s
-# 			AND se.posting_date BETWEEN %s AND %s
-# 			AND se.stock_entry_type IN ('Manufacture', 'Material Receipt')
-# 			AND se.docstatus = 1
-# 		), 0) +
-
-# 		COALESCE((
-# 			SELECT SUM(sed.qty)
-# 			FROM `tabStock Entry Detail` sed
-# 			INNER JOIN `tabStock Entry` se ON sed.parent = se.name
-# 			WHERE sed.item_code = %s
-# 			AND sed.t_warehouse IN %s
-# 			AND sed.s_warehouse NOT IN %s
-# 			AND se.posting_date BETWEEN %s AND %s
-# 			AND se.stock_entry_type = 'Material Transfer'
-# 			AND se.docstatus = 1
-# 		), 0) +
-
-# 		COALESCE((
-# 			SELECT SUM(pii.qty)
-# 			FROM `tabPurchase Invoice Item` pii
-# 			INNER JOIN `tabPurchase Invoice` pi ON pii.parent = pi.name
-# 			WHERE pii.item_code = %s
-# 			AND pii.warehouse IN %s
-# 			AND pi.posting_date BETWEEN %s AND %s
-# 			AND pi.update_stock = 1
-# 			AND pi.docstatus = 1
-# 		), 0) -
-
-# 		COALESCE((
-# 			SELECT SUM(abs(sii.qty))
-# 			FROM `tabSales Invoice Item` sii
-# 			INNER JOIN `tabSales Invoice` si ON sii.parent = si.name
-# 			WHERE si.is_return = 1
-# 			AND sii.item_code = %s
-# 			AND sii.warehouse IN %s
-# 			AND si.posting_date BETWEEN %s AND %s
-# 			AND si.docstatus = 1
-# 		), 0) -
-
-# 		COALESCE((
-# 			SELECT SUM(abs(dni.qty))
-# 			FROM `tabDelivery Note Item` dni
-# 			INNER JOIN `tabDelivery Note` dn ON dni.parent = dn.name
-# 			WHERE dn.is_return = 1
-# 			AND dni.item_code = %s
-# 			AND dni.warehouse IN %s
-# 			AND dn.posting_date BETWEEN %s AND %s
-# 			AND dn.docstatus = 1
-# 		), 0)
-# 		""",
-# 		(
-# 			item, tuple(warehouse_data), from_date, to_date,  # PR
-# 			item, tuple(warehouse_data), from_date, to_date,  # SE
-# 			item, tuple(warehouse_data), tuple(warehouse_data), from_date, to_date,  # SE Material Transfer (inward)
-# 			item, tuple(warehouse_data), from_date, to_date,  # PI
-# 			item, tuple(warehouse_data), from_date, to_date,  # SI Return
-# 			item, tuple(warehouse_data), from_date, to_date   # DN Return
-# 		)
-# 	)
-
-# 	return qty[0][0] if qty and qty[0][0] else 0
 
 def get_received_qty(item, from_date, to_date, warehouse_data):
 	try:
@@ -362,90 +289,6 @@ def get_issued_qty(item, from_date, to_date, warehouse_data):
 		)
 	)
 	return qty[0][0] if qty and qty[0][0] else 0
-
-# def get_issued_qty(item, from_date, to_date, warehouse_data):
-    # try:
-    #     query = """
-    #     SELECT sii.qty AS qty
-    #     FROM `tabSales Invoice` si
-    #     INNER JOIN `tabSales Invoice Item` sii ON sii.parent = si.name
-    #     WHERE sii.item_code = %(item)s
-    #     AND sii.warehouse IN %(warehouses)s
-    #     AND si.posting_date BETWEEN %(from_date)s AND %(to_date)s
-    #     AND si.update_stock = 1 AND si.docstatus = 1
-
-    #     UNION ALL
-
-    #     SELECT dni.qty AS qty
-    #     FROM `tabDelivery Note` dn
-    #     INNER JOIN `tabDelivery Note Item` dni ON dni.parent = dn.name
-    #     WHERE dni.item_code = %(item)s
-    #     AND dni.warehouse IN %(warehouses)s
-    #     AND dn.posting_date BETWEEN %(from_date)s AND %(to_date)s
-    #     AND dn.docstatus = 1
-
-    #     UNION ALL
-
-    #     SELECT sed.qty AS qty
-    #     FROM `tabStock Entry` se
-    #     INNER JOIN `tabStock Entry Detail` sed ON sed.parent = se.name
-    #     WHERE sed.item_code = %(item)s
-    #     AND sed.s_warehouse IN %(warehouses)s
-    #     AND se.stock_entry_type = 'Material Issue'
-    #     AND se.posting_date BETWEEN %(from_date)s AND %(to_date)s
-    #     AND se.docstatus = 1
-
-    #     UNION ALL
-
-    #     SELECT sed.qty AS qty
-    #     FROM `tabStock Entry` se
-    #     INNER JOIN `tabStock Entry Detail` sed ON sed.parent = se.name
-    #     WHERE sed.item_code = %(item)s
-    #     AND sed.s_warehouse IN %(warehouses)s
-    #     AND sed.t_warehouse NOT IN %(warehouses)s
-    #     AND se.stock_entry_type = 'Material Transfer'
-    #     AND se.posting_date BETWEEN %(from_date)s AND %(to_date)s
-    #     AND se.docstatus = 1
-
-    #     UNION ALL
-
-    #     SELECT pri.qty AS qty
-    #     FROM `tabPurchase Receipt` pr
-    #     INNER JOIN `tabPurchase Receipt Item` pri ON pri.parent = pr.name
-    #     WHERE pri.item_code = %(item)s
-    #     AND pri.warehouse IN %(warehouses)s
-    #     AND pr.is_return = 1
-    #     AND pr.posting_date BETWEEN %(from_date)s AND %(to_date)s
-    #     AND pr.docstatus = 1
-
-    #     UNION ALL
-
-    #     SELECT pii.qty AS qty
-    #     FROM `tabPurchase Invoice` pi
-    #     INNER JOIN `tabPurchase Invoice Item` pii ON pii.parent = pi.name
-    #     WHERE pii.item_code = %(item)s
-    #     AND pii.warehouse IN %(warehouses)s
-    #     AND pi.is_return = 1
-    #     AND pi.update_stock = 1
-    #     AND pi.posting_date BETWEEN %(from_date)s AND %(to_date)s
-    #     AND pi.docstatus = 1
-    #     """
-
-    #     params = {
-    #         "item": item,
-    #         "warehouses": tuple(warehouse_data),
-    #         "from_date": from_date,
-    #         "to_date": to_date
-    #     }
-
-    #     data = frappe.db.sql(query, params, as_dict=True)
-    #     total_qty = sum(abs(row.qty) for row in data if row.qty)
-
-    #     return total_qty
-
-    # except Exception as e:
-    #     frappe.log_error(frappe.get_traceback(), "Error in get_issued_qty")
-    #     return 0
 
 	
 def get_order_qty(item, from_date, to_date, warehouse_data):

@@ -6,7 +6,9 @@
  "engine": "InnoDB",
  "field_order": [
   "item_group",
-  "qty"
+  "qty",
+  "column_break_majw",
+  "auto_reorder_condition"
  ],
  "fields": [
   {
@@ -19,13 +21,23 @@
    "fieldname": "qty",
    "fieldtype": "Int",
    "label": "Qty"
+  },
+  {
+   "fieldname": "column_break_majw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_reorder_condition",
+   "fieldtype": "Check",
+   "label": "Auto Reorder Condition"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-05-29 17:50:47.842149",
+ "modified": "2025-10-15 12:58:12.925046",
  "modified_by": "Administrator",
  "module": "Jisha Customization",
  "name": "Jisha Settings",
