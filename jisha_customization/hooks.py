@@ -36,6 +36,7 @@ doctype_js = {
     "Sales Invoice":"custom_scripts/sales_invoice.js",
     "Delivery Note":"custom_scripts/delivery_note.js",
     "Payment Entry":"custom_scripts/payment_entry.js",
+    "Journal Entry":"custom_scripts/journal_entry.js"
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -250,6 +251,7 @@ fixtures = [
         "Sales Invoice Item-custom_box_creation_reference","Delivery Note-custom_scan_barcodes","Delivery Note Item-custom_box_creation_reference",
         "Delivery Note Item-custom_barcodes","Stock Entry-custom_scan_barcodes","Payment Entry-custom_gets_outstanding_invoices",
         "Payment Entry-custom_gets_outstanding_orders","Stock Entry Detail-custom_box_reference","Stock Entry Detail-custom_barcodes_v1",
+        "Journal Entry Account-custom_is_splitted"
 	)]]
 
 	},

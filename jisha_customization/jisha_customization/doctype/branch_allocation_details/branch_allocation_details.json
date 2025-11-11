@@ -1,0 +1,62 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-07 11:15:53.217995",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "branch",
+  "percentage",
+  "chart_of_account",
+  "effective_date"
+ ],
+ "fields": [
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "percentage",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Percentage"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "chart_of_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Chart of Account",
+   "link_filters": "[[\"Account\",\"root_type\",\"=\",\"Expense\"]]",
+   "options": "Account"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "effective_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Effective Date"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-11 15:43:20.015515",
+ "modified_by": "Administrator",
+ "module": "Jisha Customization",
+ "name": "Branch Allocation Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
