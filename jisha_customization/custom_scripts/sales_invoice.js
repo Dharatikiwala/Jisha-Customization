@@ -19,51 +19,82 @@ frappe.ui.form.on('Sales Invoice', {
                             return;
                         }
                         var child_data = barcode_data.table_mrql
-                        console.log(barcode_data)
-                        
-                        if (barcode_data && child_data && child_data.length > 0 ){
-                            var barcodes = barcode_data.table_mrql.map(function(row) {
+                        // Box barcode processing
+                        if (barcode_data && child_data && child_data.length > 0) {
+                            var barcodes = barcode_data.table_mrql.map(function (row) {
                                 return row.barcode_reference;
                             }).join("\n");
-                            console.log(barcodes);
-                            var barcodeExists = frm.doc.items.some(function(item) {
+
+                            var barcodeExists = frm.doc.items.some(function (item) {
                                 return item.custom_barcodes === barcodes;
                             });
 
                             if (barcodeExists) {
                                 frappe.msgprint('The scanned box barcode already exists in the items table.');
                                 frm.set_value("custom_scan_barcodes", "");
-                                return
+                                return;
                             } else {
-                                // frm.doc.items = [];
                                 let row;
-                                const emptyRow = frm.doc.items.find(item => 
-                                    (item.qty === 0 || !item.qty) || 
+                                const emptyRow = frm.doc.items.find(item =>
+                                    (item.qty === 0 || !item.qty) ||
                                     !item.item_code
                                 );
-                                
+
                                 if (emptyRow) {
-                                    // Use the empty row instead of creating a new one
                                     row = emptyRow;
                                 } else {
-                                    // If no empty row exists, add a new row
                                     row = frappe.model.add_child(frm.doc, "Sales Invoice Item", "items");
                                 }
-                                // var row = frappe.model.add_child(frm.doc, "Sales Invoice Item", "items");
-                                row.item_code = barcode_data.table_mrql[0].item_code;
-                                row.warehouse = barcode_data.table_mrql[0].warehouse;
-                                row.batch_no = barcode_data.table_mrql[0].batch;
-                                row.qty = barcode_data.box_qty;
-                                row.custom_box_creation_reference = barcode_data.name
-                                row.custom_barcodes = barcodes;
-                                row.use_serial_batch_fields = 1;
-                                cur_frm.script_manager.trigger("item_code", row.doctype, row.name);
-                                frm.refresh_field("items");
-                                frm.set_value("custom_scan_barcodes", "");
-                                frm.save();
-                            }
-                            
-                        }else{
+
+                                const first_item_code = barcode_data.table_mrql[0].item_code;
+
+                                // Fetch item and Jisha Setting data from backend
+                                frappe.db.get_value("Item", first_item_code, "item_group")
+                                    .then(item_res => {
+                                        const item_group = item_res.message.item_group;
+
+                                        frappe.db.get_doc("Jisha Settings").then(jisha_setting => {
+                                            const jisha_group = jisha_setting.item_group;
+                                            const jisha_qty = jisha_setting.qty || 1;
+
+                                            // Helper function to check if item group is same or a child
+                                            frappe.call({
+                                                method: "frappe.client.get_list",
+                                                args: {
+                                                    doctype: "Item Group",
+                                                    filters: { parent_item_group: jisha_group },
+                                                    fields: ["name"]
+                                                },
+                                                callback: (r) => {
+                                                    const sub_groups = r.message.map(g => g.name);
+                                                    const valid_group = (item_group === jisha_group) || sub_groups.includes(item_group);
+
+                                                    // Set row values
+                                                    row.item_code = first_item_code;
+                                                    row.warehouse = barcode_data.table_mrql[0].warehouse;
+                                                    row.batch_no = barcode_data.table_mrql[0].batch;
+                                                    row.custom_box_creation_reference = barcode_data.name;
+                                                    row.custom_barcodes = barcodes;
+                                                    row.use_serial_batch_fields = 1;
+
+                                                    if (valid_group) {
+                                                        row.qty = barcode_data.box_qty / jisha_qty;
+                                                    } else {
+                                                        row.qty = barcode_data.box_qty;
+                                                    }
+
+                                                    cur_frm.script_manager.trigger("item_code", row.doctype, row.name);
+                                                    frm.refresh_field("items");
+                                                    frm.set_value("custom_scan_barcodes", "");
+                                                    frm.save();
+                                                }
+                                            });
+                                        });
+                                    });
+                                }
+                        }
+                        // Single barcode processing
+                        else{
 
                             var barcodeExistsIndex = frm.doc.items.findIndex(function(item) {
                                 var barcodesArray = item.custom_barcodes ? item.custom_barcodes.split("\n") : [];
