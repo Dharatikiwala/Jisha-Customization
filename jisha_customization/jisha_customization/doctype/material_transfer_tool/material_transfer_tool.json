@@ -6,6 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "item_code",
+  "branch",
   "scan_barcode",
   "column_break_kmz6",
   "fetch_material_request",
@@ -43,13 +44,19 @@
    "fieldtype": "Data",
    "label": "Scan Barcode",
    "options": "Barcode"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-09-17 11:40:13.499240",
+ "modified": "2025-11-15 13:17:16.106984",
  "modified_by": "Administrator",
  "module": "Jisha Customization",
  "name": "Material Transfer Tool",

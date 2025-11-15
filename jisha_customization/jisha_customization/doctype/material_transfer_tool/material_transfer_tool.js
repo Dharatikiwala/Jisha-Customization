@@ -7,6 +7,7 @@ frappe.ui.form.on("Material Transfer Tool", {
             frappe.call({
                 method: "jisha_customization.jisha_customization.doctype.material_transfer_tool.material_transfer_tool.create_mt",
                 args: {
+                    "branch":frm.doc.branch,
                     "items": frm.doc.items
                 },
                 freeze: true,

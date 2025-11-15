@@ -84,7 +84,7 @@ def get_barcode_data(barcode_data):
 	return {"status": "error", "message": f"Barcode '{barcode_data}' not found"}
 
 @frappe.whitelist()
-def create_mt(items):
+def create_mt(items,branch):
 	try:
 		items = json.loads(items or "[]")
 
@@ -105,12 +105,14 @@ def create_mt(items):
 		if stock_entry:
 			# Load existing draft
 			stock_doc = frappe.get_doc("Stock Entry", stock_entry)
+			stock_doc.custom_branch = branch
 		else:
 			# Create new draft Stock Entry
 			stock_doc = frappe.new_doc("Stock Entry")
 			stock_doc.update({
 				"posting_date": frappe.utils.today(),
-				"stock_entry_type": "Material Transfer"
+				"stock_entry_type": "Material Transfer",
+				"custom_branch":branch
 			})
 
 		# ✅ Check duplicates first
@@ -123,6 +125,7 @@ def create_mt(items):
 					"t_warehouse": item.get("target_warehouse"),
 					"batch_no": item.get("batch"),
 					"qty": item.get("barcode_qty"),
+					"custom_is_created_from_mt_tool":1,
 					"material_request": item.get("material_request"),
 					"material_request_item": item.get("material_request_item"),
 					"parent": stock_doc.name if stock_doc.name else None,
@@ -148,6 +151,7 @@ def create_mt(items):
 				"t_warehouse": item.get("target_warehouse"),
 				"batch_no": item.get("batch"),
 				"qty": item.get("barcode_qty"),
+				"custom_is_created_from_mt_tool":1,
 				"material_request": item.get("material_request"),
 				"material_request_item": item.get("material_request_item"),
 				"custom_barcodes_v1": item.get("barcodes"),
