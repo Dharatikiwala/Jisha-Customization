@@ -251,7 +251,7 @@ fixtures = [
         "Sales Invoice Item-custom_box_creation_reference","Delivery Note-custom_scan_barcodes","Delivery Note Item-custom_box_creation_reference",
         "Delivery Note Item-custom_barcodes","Stock Entry-custom_scan_barcodes","Payment Entry-custom_gets_outstanding_invoices",
         "Payment Entry-custom_gets_outstanding_orders","Stock Entry Detail-custom_box_reference","Stock Entry Detail-custom_barcodes_v1",
-        "Journal Entry Account-custom_is_splitted"
+        "Journal Entry Account-custom_is_splitted","Stock Entry Detail-custom_is_created_from_mt_tool"
 	)]]
 
 	},
