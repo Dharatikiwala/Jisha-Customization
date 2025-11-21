@@ -221,24 +221,77 @@ frappe.ui.form.on('Stock Entry', {
                             frm.set_value("custom_scan_barcodes", "");
                             return;
                         }
+                            var child_data = barcode_data.table_mrql;
 
-                        var child_data = barcode_data.table_mrql;
+                            if (barcode_data && child_data && child_data.length > 0) {
 
-                        // ✅ Only this block is changed 
-                        if (barcode_data && child_data && child_data.length > 0) {
-                            var barcodes = barcode_data.table_mrql.map(function (row) {
-                                return row.barcode_reference;
-                            }).join("\n");
+                                var barcodes = child_data.map(r => r.barcode_reference).join("\n");
+                                const first_item_code = child_data[0].item_code;
 
-                            var barcodeExists = frm.doc.items.some(function (item) {
-                                return item.custom_barcodes === barcodes;
-                            });
+                                // ----------------------------------------------------------
+                                // 1) Check if existing row with same item_code + batch_no
+                                // ----------------------------------------------------------
+                                var existingRow = frm.doc.items.find(item =>
+                                    item.item_code === child_data[0].item_code &&
+                                    item.batch_no === child_data[0].batch
+                                );
 
-                            if (barcodeExists) {
-                                frappe.msgprint('The scanned barcode already exists in the items table.');
-                                frm.set_value("custom_scan_barcodes", "");
-                                return;
-                            } else {
+                                if (existingRow) {
+                                    // -----------------------------------------
+                                    // ✅ Add quantity
+                                    // -----------------------------------------
+                                    existingRow.qty += parseFloat(barcode_data.box_qty) || 1;
+
+                                    // -----------------------------------------
+                                    // ✅ Merge barcodes (no duplicates)
+                                    // -----------------------------------------
+                                    let existingBarcodes = existingRow.custom_barcodes_v1
+                                        ? existingRow.custom_barcodes_v1.split("\n")
+                                        : [];
+
+                                    child_data.forEach(row => {
+                                        if (!existingBarcodes.includes(row.barcode_reference)) {
+                                            existingBarcodes.push(row.barcode_reference);
+                                        }
+                                    });
+
+                                    existingRow.custom_barcodes_v1 = existingBarcodes.join("\n");
+
+                                    // -----------------------------------------
+                                    // ✅ Merge box reference (avoid duplicates)
+                                    // -----------------------------------------
+                                    let refList = existingRow.custom_box_reference
+                                        ? existingRow.custom_box_reference.split("\n")
+                                        : [];
+
+                                    if (!refList.includes(barcode_data.name)) {
+                                        refList.push(barcode_data.name);
+                                    }
+
+                                    existingRow.custom_box_reference = refList.join("\n");
+
+                                    frm.refresh_field("items");
+                                    frm.set_value("custom_scan_barcodes", "");
+                                    frm.save();
+                                    return;
+                                }
+
+                                // ----------------------------------------------------------
+                                // 2) Block duplicate box scan
+                                // ----------------------------------------------------------
+                                var barcodeExists = frm.doc.items.some(item =>
+                                    item.custom_barcodes_v1 === barcodes
+                                );
+
+                                if (barcodeExists) {
+                                    frappe.msgprint("The scanned box barcode already exists in the items table.");
+                                    frm.set_value("custom_scan_barcodes", "");
+                                    return;
+                                }
+
+                                // ----------------------------------------------------------
+                                // 3) Use empty row or create new one
+                                // ----------------------------------------------------------
                                 let row;
                                 const emptyRow = frm.doc.items.find(item =>
                                     (item.qty === 0 || !item.qty) ||
@@ -251,55 +304,62 @@ frappe.ui.form.on('Stock Entry', {
                                     row = frappe.model.add_child(frm.doc, "Stock Entry Detail", "items");
                                 }
 
-                                const first_item_code = barcode_data.table_mrql[0].item_code;
+                                // ----------------------------------------------------------
+                                // 4) Apply JISHA LOGIC (Async calls merged here)
+                                // ----------------------------------------------------------
+                                frappe.db.get_value("Item", first_item_code, "item_group").then(item_res => {
 
-                                // Step 1: Get the Item Group of scanned item
-                                frappe.db.get_value("Item", first_item_code, "item_group")
-                                    .then(item_res => {
-                                        const item_group = item_res.message.item_group;
+                                    const item_group = item_res.message.item_group;
 
-                                        // Step 2: Get Jisha Setting
-                                        frappe.db.get_doc("Jisha Settings").then(jisha_setting => {
-                                            const jisha_group = jisha_setting.item_group;
-                                            const jisha_qty = jisha_setting.qty || 1;
+                                    frappe.db.get_doc("Jisha Settings").then(jisha_setting => {
 
-                                            // Step 3: Get sub item groups under Jisha group
-                                            frappe.call({
-                                                method: "frappe.client.get_list",
-                                                args: {
-                                                    doctype: "Item Group",
-                                                    filters: { parent_item_group: jisha_group },
-                                                    fields: ["name"]
-                                                },
-                                                callback: (r) => {
-                                                    const sub_groups = r.message.map(g => g.name);
-                                                    const valid_group = (item_group === jisha_group) || sub_groups.includes(item_group);
+                                        const jisha_group = jisha_setting.item_group;
+                                        const jisha_qty = jisha_setting.qty || 1;
 
-                                                    // Step 4: Assign row values
-                                                    row.item_code = first_item_code;
-                                                    row.s_warehouse = barcode_data.table_mrql[0].warehouse;
-                                                    row.batch_no = barcode_data.table_mrql[0].batch;
-                                                    row.custom_box_reference = barcode_data.name;
-                                                    row.custom_barcodes_v1 = barcodes;
-                                                    row.use_serial_batch_fields = 1;
+                                        frappe.call({
+                                            method: "frappe.client.get_list",
+                                            args: {
+                                                doctype: "Item Group",
+                                                filters: { parent_item_group: jisha_group },
+                                                fields: ["name"]
+                                            },
+                                            callback: (r) => {
 
-                                                    // Step 5: Calculate quantity based on Jisha Setting
-                                                    if (valid_group) {
-                                                        row.qty = barcode_data.box_qty / jisha_qty;
-                                                    } else {
-                                                        row.qty = barcode_data.box_qty;
-                                                    }
+                                                const sub_groups = r.message.map(g => g.name);
+                                                const valid_group =
+                                                    (item_group === jisha_group) ||
+                                                    sub_groups.includes(item_group);
 
-                                                    cur_frm.script_manager.trigger("item_code", row.doctype, row.name);
-                                                    frm.refresh_field("items");
-                                                    frm.set_value("custom_scan_barcodes", "");
-                                                    frm.save();
+                                                // -----------------------------------------
+                                                //  Assign row values
+                                                // -----------------------------------------
+                                                row.item_code = first_item_code;
+                                                row.s_warehouse = child_data[0].warehouse;
+                                                row.batch_no = child_data[0].batch;
+                                                row.custom_box_reference = barcode_data.name;
+                                                row.custom_barcodes_v1 = barcodes;
+                                                row.use_serial_batch_fields = 1;
+
+                                                // -----------------------------------------
+                                                //  Jisha Qty Logic
+                                                // -----------------------------------------
+                                                if (valid_group) {
+                                                    row.qty = barcode_data.box_qty / jisha_qty;
+                                                } else {
+                                                    row.qty = barcode_data.box_qty;
                                                 }
-                                            });
+
+                                                cur_frm.script_manager.trigger("item_code", row.doctype, row.name);
+                                                frm.refresh_field("items");
+                                                frm.set_value("custom_scan_barcodes", "");
+                                                frm.save();
+                                            }
                                         });
                                     });
-                                }
+                                });
                             }
+
+
                             else {
                             // Keep your else block unchanged as per your instruction
                             var barcodeExistsIndex = frm.doc.items.findIndex(function(item) {
