@@ -49,9 +49,13 @@ frappe.ui.form.on("Material Transfer Tool", {
             frappe.throw("Please select Item Code");
         }
 
+        if(!frm.doc.branch){
+            frappe.throw("Please select Branch");
+        }
+
         frappe.call({
             method: "jisha_customization.jisha_customization.doctype.material_transfer_tool.material_transfer_tool.get_material_requests",
-            args: { item_code: frm.doc.item_code },
+            args: { item_code: frm.doc.item_code, branch:frm.doc.branch },
             freeze:true,
             callback: function(r) {
                 const requests = r.message || [];
