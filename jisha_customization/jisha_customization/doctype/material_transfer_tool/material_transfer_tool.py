@@ -11,7 +11,7 @@ class MaterialTransferTool(Document):
 
 
 @frappe.whitelist()
-def get_material_requests(item_code):
+def get_material_requests(item_code,branch):
 
 	return frappe.db.sql("""
 		SELECT
@@ -28,10 +28,11 @@ def get_material_requests(item_code):
 			`tabMaterial Request` mr ON mr.name = mri.parent
 		WHERE
 			mri.item_code = %s
+			AND mr.custom_requested_by_branch = %s
 			AND mr.docstatus = 1
 			AND mr.status IN ('Pending', 'Partially Received')
 			AND (mri.qty - mri.ordered_qty) > 0
-	""", item_code, as_dict=1)
+	""", (item_code,branch), as_dict=1)
 
 
 @frappe.whitelist()
@@ -86,6 +87,9 @@ def get_barcode_data(barcode_data):
 @frappe.whitelist()
 def create_mt(items,branch):
 	try:
+		if not branch:
+			frappe.throw("Branch is required to create Material Transfer.")
+			
 		items = json.loads(items or "[]")
 
 		if not items:
@@ -98,6 +102,7 @@ def create_mt(items,branch):
 				"posting_date": frappe.utils.today(),
 				"stock_entry_type": "Material Transfer",
 				"docstatus": 0,   # Draft
+				"custom_branch":branch
 			},
 			"name"
 		)
@@ -160,6 +165,7 @@ def create_mt(items,branch):
 			})
 
 		# Save (insert if new, update if existing)
+		stock_doc.calculate_rate_and_amount()
 		stock_doc.save(ignore_permissions=True)
 
 		return {"status": "success", "message": f"Material Transfer {stock_doc.name} updated successfully."}
