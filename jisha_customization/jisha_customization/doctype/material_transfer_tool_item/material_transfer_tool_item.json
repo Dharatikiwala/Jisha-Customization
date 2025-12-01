@@ -10,6 +10,7 @@
   "material_request",
   "material_request_item",
   "branch",
+  "to_branch",
   "column_break_2urr",
   "mr_date",
   "mr_qty",
@@ -119,7 +120,13 @@
   {
    "fieldname": "branch",
    "fieldtype": "Link",
-   "label": "Branch",
+   "label": "From Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "to_branch",
+   "fieldtype": "Link",
+   "label": "To Branch",
    "options": "Branch"
   }
  ],
@@ -127,7 +134,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-17 17:33:38.161260",
+ "modified": "2025-12-01 13:18:21.558123",
  "modified_by": "Administrator",
  "module": "Jisha Customization",
  "name": "Material Transfer Tool Item",

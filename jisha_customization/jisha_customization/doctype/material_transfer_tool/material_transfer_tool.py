@@ -88,7 +88,7 @@ def get_barcode_data(barcode_data):
 def create_mt(items,branch):
 	try:
 		if not branch:
-			frappe.throw("Branch is required to create Material Transfer.")
+			frappe.throw("To Branch is required to create Material Transfer.")
 			
 		items = json.loads(items or "[]")
 
@@ -161,7 +161,7 @@ def create_mt(items,branch):
 				"material_request_item": item.get("material_request_item"),
 				"custom_barcodes_v1": item.get("barcodes"),
 				"custom_box_reference": item.get("boxes"),
-				"branch": item.get("branch")
+				"branch": item.get("to_branch")
 			})
 
 		# Save (insert if new, update if existing)
