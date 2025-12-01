@@ -7,7 +7,7 @@ frappe.ui.form.on("Material Transfer Tool", {
             frappe.call({
                 method: "jisha_customization.jisha_customization.doctype.material_transfer_tool.material_transfer_tool.create_mt",
                 args: {
-                    "branch":frm.doc.branch,
+                    "branch":frm.doc.to_branch,
                     "items": frm.doc.items
                 },
                 freeze: true,
@@ -43,6 +43,17 @@ frappe.ui.form.on("Material Transfer Tool", {
         });
 
 	},
+    to_branch: function(frm) {
+        if (frm.doc.items && frm.doc.items.length > 0) {
+            frm.doc.items.forEach(function(row) {
+                row.to_branch = frm.doc.to_branch;
+            });
+            frm.refresh_field("items");
+            frm.save();
+        }else{
+            frappe.throw("Please fetch Material Requests first to set To Branch in items table.");
+        }
+    },
 
     fetch_material_request: function(frm) {
         if (!frm.doc.item_code) {
@@ -50,7 +61,7 @@ frappe.ui.form.on("Material Transfer Tool", {
         }
 
         if(!frm.doc.branch){
-            frappe.throw("Please select Branch");
+            frappe.throw("Please select From Branch");
         }
 
         frappe.call({
@@ -78,7 +89,8 @@ frappe.ui.form.on("Material Transfer Tool", {
                         mr_date: d.transaction_date,
                         target_warehouse: d.warehouse,
                         material_request_item: d.material_request_item,
-                        branch:d.branch
+                        branch:d.branch,
+                        to_branch:frm.doc.to_branch || ''
                     });
                 });
 
@@ -240,156 +252,7 @@ frappe.ui.form.on("Material Transfer Tool", {
 
                             
                         }
-
-                        // if(barcode_data.doctype === "Box Creation"){
-
-                        //     // 👉 Duplicate check
-                        //     let duplicateBox = child_data.some(cd => {
-                        //         return items.some(row => {
-                        //             let existing_boxes = (row.boxes || "").split("\n").filter(Boolean);
-                        //             return row.item_code === cd.item_code &&
-                        //                 (row.batch_no || row.batch) === cd.batch &&
-                        //                 existing_boxes.includes(cd.parent);
-                        //         });
-                        //     });
-
-                        //     if (duplicateBox) {
-                        //         frappe.msgprint('Scanned box already exists in items.');
-                        //         frm.set_value("scan_barcode", "");
-                        //         return;
-                        //     }
-
-                        //     let scan_qty = barcode_data.box_qty || 1;
-                        //     let validationError = child_data.find(cd => {
-                        //         let row = items.find(d => d.item_code === cd.item_code);
-                        //         let pending_qty = (row?.mr_qty || 0) - (row?.barcode_qty || 0);
-                        //         return scan_qty > pending_qty;
-                        //     });
-
-                        //     if (validationError) {
-                        //         let row = items.find(d => d.item_code === validationError.item_code);
-                        //         frappe.msgprint(`Scanned box quantity (${scan_qty}) exceeds pending quantity (${(row?.mr_qty || 0) - (row?.barcode_qty || 0)}) for item ${row.item_code} row ${row.idx}`);
-                        //         frm.set_value("scan_barcode", "");
-                        //         return;
-                        //     }
-
-
-                        //     // 👉 Update rows
-                        //     child_data.forEach(cd => {
-                        //         let row = items.find(d => d.item_code === cd.item_code && d.warehouse !== cd.warehouse);
-                        //         if (row) {
-                        //             row.barcode_qty = (row.barcode_qty || 0) + 1;
-                        //             row.pending_qty = (row.mr_qty || 0) - (row.barcode_qty || 0);
-                        //             row.batch = cd.batch;
-                        //             row.source_warehouse = cd.warehouse;
-
-                        //             // merge unique barcodes
-                        //             let existing_barcodes = (row.barcodes || "").split("\n").filter(Boolean);
-                        //             if (!existing_barcodes.includes(cd.barcode_reference)) {
-                        //                 existing_barcodes.push(cd.barcode_reference);
-                        //             }
-                        //             row.barcodes = existing_barcodes.join("\n");
-
-                        //             // merge unique boxes
-                        //             let existing_boxes = (row.boxes || "").split("\n").filter(Boolean);
-                        //             if (!existing_boxes.includes(cd.parent)) {
-                        //                 existing_boxes.push(cd.parent);
-                        //             }
-                        //             row.boxes = existing_boxes.join("\n");
-                        //         }
-                        //     });
-                        // }
-
-                        // if (barcode_data.doctype === "Box Creation") {
-
-                        //     let scan_qty = barcode_data.box_qty || 1;
-
-                        //     // Duplicate check for boxes
-                        //     let duplicateBox = child_data.some(cd => {
-                        //         return items.some(row => {
-                        //             let existing_boxes = (row.boxes || "").split("\n").filter(Boolean);
-                        //             let new_boxes = (cd.parent || "").split("\n").filter(Boolean);
-                        //             return row.item_code === cd.item_code &&
-                        //                 (row.batch_no || row.batch) === cd.batch &&
-                        //                 new_boxes.some(nb => existing_boxes.includes(nb));
-                        //         });
-                        //     });
-
-                        //     if (duplicateBox) {
-                        //         frappe.msgprint('Scanned box already exists in items.');
-                        //         frm.set_value("scan_barcode", "");
-                        //         return;
-                        //     }
-
-                        //     // Validation: warn if scanned qty > pending
-                        //     let validationError = child_data.find(cd => {
-                        //         let row = items.find(d => d.item_code === cd.item_code);
-                        //         let pending = (row?.mr_qty || 0) - (row?.barcode_qty || 0);
-                        //         return row && row.barcode_qty !== row.mr_qty && pending > 0 && scan_qty > pending;
-                        //     });
-
-                        //     if (validationError) {
-                        //         let row = items.find(d => d.item_code === validationError.item_code);
-                        //         frappe.throw(
-                        //             `Scanned box quantity (${scan_qty}) exceeds pending quantity (${(row?.mr_qty || 0) - (row?.barcode_qty || 0)}) for item ${row.item_code} row ${row.idx}`
-                        //         );
-                        //     }
-
-                        //     // Find first eligible row
-                        //     let targetRow = null;
-
-                        //     for (let cd of child_data) {
-                        //         let row = items.find(d => 
-                        //             d.item_code === cd.item_code && 
-                        //             d.barcode_qty !== d.mr_qty && 
-                        //             ((d.mr_qty || 0) - (d.barcode_qty || 0)) > 0
-                        //         );
-                        //         if (row) {
-                        //             targetRow = row;
-                        //             break; // stop at first eligible row
-                        //         }
-                        //     }
-
-                        //     if (!targetRow) {
-                        //         frappe.msgprint("No eligible row found for this scanned box.");
-                        //         frm.set_value("scan_barcode", "");
-                        //         return;
-                        //     }
-
-                        //     // Update qtys for the target row
-                        //     let pending = (targetRow.mr_qty || 0) - (targetRow.barcode_qty || 0);
-                        //     targetRow.barcode_qty += scan_qty;
-                        //     targetRow.pending_qty = pending - scan_qty;
-
-                        //     // Get first child for batch & warehouse info
-                        //     let firstChild = child_data.find(cd => cd.item_code === targetRow.item_code);
-                        //     if (firstChild) {
-                        //         targetRow.batch = firstChild.batch;
-                        //         targetRow.source_warehouse = firstChild.warehouse;
-                        //     }
-
-                        //     // Merge all barcodes for this row
-                        //     let existing_barcodes = (targetRow.barcodes || "").split("\n").filter(Boolean);
-                        //     child_data.filter(cd => cd.item_code === targetRow.item_code).forEach(cd => {
-                        //         let new_barcodes = (cd.barcode_reference || "").split("\n").filter(Boolean);
-                        //         existing_barcodes.push(...new_barcodes);
-                        //     });
-                        //     targetRow.barcodes = Array.from(new Set(existing_barcodes)).join("\n");
-
-                        //     // Merge all boxes for this row
-                        //     let existing_boxes = (targetRow.boxes || "").split("\n").filter(Boolean);
-                        //     child_data.filter(cd => cd.item_code === targetRow.item_code).forEach(cd => {
-                        //         let new_boxes = (cd.parent || "").split("\n").filter(Boolean);
-                        //         existing_boxes.push(...new_boxes);
-                        //     });
-                        //     targetRow.boxes = Array.from(new Set(existing_boxes)).join("\n");
-
-                        //     // Refresh form
-                        //     frm.refresh_field("items");
-                        //     frm.set_value("scan_barcode", "");
-                        // }
-
-
+                        // From Box Creation
                         if (barcode_data.doctype === "Box Creation") {
 
                             let scan_qty = barcode_data.box_qty || 1;
