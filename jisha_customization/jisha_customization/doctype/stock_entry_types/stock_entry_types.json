@@ -1,0 +1,35 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-02 13:02:21.530576",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "stock_entry_types"
+ ],
+ "fields": [
+  {
+   "fieldname": "stock_entry_types",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Stock Entry Types",
+   "options": "Stock Entry Type"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-02 13:04:06.337495",
+ "modified_by": "Administrator",
+ "module": "Jisha Customization",
+ "name": "Stock Entry Types",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

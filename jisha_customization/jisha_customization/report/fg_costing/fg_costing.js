@@ -55,6 +55,12 @@ frappe.query_reports["FG Costing"] = {
 			fieldtype: "Link",
 			options: "Branch"
 		},
+		{
+			fieldname:"group_by",
+			label: __("Group By"),
+			fieldtype: "Select",
+			options: ["","Item Group"]
+		},
 	],
 
 	formatter: function(value, row, column, data, default_formatter) {
@@ -65,6 +71,16 @@ frappe.query_reports["FG Costing"] = {
             value = `<b>${value}</b>`;
         }
 
+		if (data && data.entry_type === "subtotal") {
+			value = `<b>${value}</b>`;
+		}
+
+		// Grand total
+		if (data && data.stock_entry_type === "Grand Total") {
+			value = `<b>${value}</b>`;
+		}
+
         return value;
     }
 };
+

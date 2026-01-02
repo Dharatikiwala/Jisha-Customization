@@ -8,7 +8,8 @@
   "item_group",
   "qty",
   "column_break_majw",
-  "auto_reorder_condition"
+  "auto_reorder_condition",
+  "stock_entry_types"
  ],
  "fields": [
   {
@@ -31,13 +32,19 @@
    "fieldname": "auto_reorder_condition",
    "fieldtype": "Check",
    "label": "Auto Reorder Condition"
+  },
+  {
+   "fieldname": "stock_entry_types",
+   "fieldtype": "Table",
+   "label": "Stock Entry Types",
+   "options": "Stock Entry Types"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-10-15 12:58:12.925046",
+ "modified": "2026-01-02 13:03:55.987837",
  "modified_by": "Administrator",
  "module": "Jisha Customization",
  "name": "Jisha Settings",
@@ -55,6 +62,7 @@
   }
  ],
  "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
