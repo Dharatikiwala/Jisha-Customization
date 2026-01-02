@@ -138,10 +138,12 @@ doc_events = {
 		"on_cancel": "jisha_customization.jisha_customization.override.stock_entry.on_cancel"
 	},
 	"Sales Invoice": {
+        "before_save":"jisha_customization.jisha_customization.override.sales_invoice.before_save",
 		"on_submit": "jisha_customization.jisha_customization.override.sales_invoice.on_submit",
         "on_cancel": "jisha_customization.jisha_customization.override.sales_invoice.on_cancel"
 	},
     "Delivery Note": {
+        "before_save":"jisha_customization.jisha_customization.override.delivery_note.before_save",
 		"on_submit": "jisha_customization.jisha_customization.override.delivery_note.on_submit",
         "on_cancel": "jisha_customization.jisha_customization.override.delivery_note.on_cancel"
 	}
@@ -251,7 +253,7 @@ fixtures = [
         "Sales Invoice Item-custom_box_creation_reference","Delivery Note-custom_scan_barcodes","Delivery Note Item-custom_box_creation_reference",
         "Delivery Note Item-custom_barcodes","Stock Entry-custom_scan_barcodes","Payment Entry-custom_gets_outstanding_invoices",
         "Payment Entry-custom_gets_outstanding_orders","Stock Entry Detail-custom_box_reference","Stock Entry Detail-custom_barcodes_v1",
-        "Journal Entry Account-custom_is_splitted","Stock Entry Detail-custom_is_created_from_mt_tool"
+        "Journal Entry Account-custom_is_splitted","Stock Entry Detail-custom_is_created_from_mt_tool","Item-custom_has_barcode"
 	)]]
 
 	},
