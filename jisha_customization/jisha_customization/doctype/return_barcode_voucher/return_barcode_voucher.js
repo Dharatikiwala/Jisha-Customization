@@ -19,7 +19,7 @@ frappe.ui.form.on("Return Barcode Voucher", {
 				}
 			}
 		})
-
+            
         frm.add_custom_button("Process Return",function(){
             frappe.call({
                 method: 'jisha_customization.jisha_customization.doctype.return_barcode_voucher.return_barcode_voucher.make_voucher_return',
@@ -28,7 +28,6 @@ frappe.ui.form.on("Return Barcode Voucher", {
                 },
                 callback:function(r){
                     console.log(r.message)
-                    
                     frm.reload_doc()
                 }
             })
