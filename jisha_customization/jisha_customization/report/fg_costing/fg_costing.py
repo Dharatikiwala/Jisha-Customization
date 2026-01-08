@@ -16,19 +16,21 @@ def get_data(filters):
     # -------------------------------
     settings = frappe.get_cached_doc("Jisha Settings")
 
-    types = [
-        row.stock_entry_types
-        for row in settings.stock_entry_types
-        if row.stock_entry_types
-    ]
+    types = []
+    manufacture_types = []
+
+    for row in settings.stock_entry_types:
+        if not row.stock_entry_types:
+            continue
+
+        types.append(row.stock_entry_types)
+
+        # 👇 derive manufacture types from purpose
+        if row.purpose == "Manufacture":
+            manufacture_types.append(row.stock_entry_types)
 
     if not types:
         frappe.throw("Please configure Stock Entry Types in Jisha Settings")
-
-    # -------------------------------
-    # 2️⃣ Define Manufacture Types
-    # -------------------------------
-    manufacture_types = ("Manufacture", "Viscose Manufacture Entry")
 
     # -------------------------------
     # 3️⃣ Dynamic Conditions
@@ -64,32 +66,37 @@ def get_data(filters):
     # -------------------------------
     raw_data = frappe.db.sql(
         f"""
-		SELECT
-			se.stock_entry_type,
-			se.name AS stock_entry_name,
-			se.work_order,
-			se.posting_date,
-			sed.item_code,
-			sed.t_warehouse,
-			sed.valuation_rate,
-			sed.qty AS produce_qty,
-			sed.item_group,
-			sed.batch_no,
-			se.custom_branch AS branch,
-			COALESCE(wo.qty, sed.qty) AS qty_to_produce
-		FROM `tabStock Entry` se
-		INNER JOIN `tabStock Entry Detail` sed 
-			ON se.name = sed.parent
-		LEFT JOIN `tabWork Order` wo 
-			ON se.work_order = wo.name
-		WHERE
-			se.stock_entry_type IN %(types)s
-			AND {condition_str}
-		ORDER BY se.posting_date, se.name
-	""",
-        {**filters, "types": tuple(types), "manufacture_types": manufacture_types},
+        SELECT
+            se.stock_entry_type,
+            se.name AS stock_entry_name,
+            se.work_order,
+            se.posting_date,
+            sed.item_code,
+            sed.t_warehouse,
+            sed.valuation_rate,
+            sed.qty AS produce_qty,
+            sed.item_group,
+            sed.batch_no,
+            se.custom_branch AS branch,
+            COALESCE(wo.qty, sed.qty) AS qty_to_produce
+        FROM `tabStock Entry` se
+        INNER JOIN `tabStock Entry Detail` sed 
+            ON se.name = sed.parent
+        LEFT JOIN `tabWork Order` wo 
+            ON se.work_order = wo.name
+        WHERE
+            se.stock_entry_type IN %(types)s
+            AND {condition_str}
+        ORDER BY se.posting_date, se.name
+        """,
+        {
+            **filters,
+            "types": tuple(types),
+            "manufacture_types": tuple(manufacture_types) or ("",),
+        },
         as_dict=1,
     )
+
 
     # Early return if no data
     if not raw_data:

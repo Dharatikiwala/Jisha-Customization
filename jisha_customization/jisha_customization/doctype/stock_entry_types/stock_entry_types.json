@@ -6,7 +6,8 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "stock_entry_types"
+  "stock_entry_types",
+  "purpose"
  ],
  "fields": [
   {
@@ -15,13 +16,21 @@
    "in_list_view": 1,
    "label": "Stock Entry Types",
    "options": "Stock Entry Type"
+  },
+  {
+   "fetch_from": "stock_entry_types.purpose",
+   "fetch_if_empty": 1,
+   "fieldname": "purpose",
+   "fieldtype": "Data",
+   "label": "Purpose",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-02 13:04:06.337495",
+ "modified": "2026-01-08 13:27:15.558699",
  "modified_by": "Administrator",
  "module": "Jisha Customization",
  "name": "Stock Entry Types",
