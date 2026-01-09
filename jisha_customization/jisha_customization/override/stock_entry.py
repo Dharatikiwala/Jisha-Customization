@@ -133,7 +133,6 @@ def calculate_additional_cost(self):
 
     self.total_additional_costs = sum(t.amount for t in self.get("additional_costs"))
 
-
 @frappe.whitelist()
 def create_barcode_entry(doc):
     try:
@@ -166,59 +165,61 @@ def create_barcode_entry(doc):
         )
         allowed_item_groups.update(sub_groups)
 
-        barcode_entries = []
+        barcode_entry_refs = []
+        
+        # ✅ PROCESS EACH ROW INDEPENDENTLY
         for item in doc.get("items"):
-            item_group = frappe.db.get_value("Item", item["item_code"], "item_group")
-            multiplier = settings.qty if item_group in allowed_item_groups else 1
-            final_qty = int(item.get("qty", 0) * multiplier)
-
             # Only create barcodes for valid finished items (manufacture) or all items (receipt)
-            if (
-                doc.get("purpose") == "Manufacture"
-                and item.get("is_finished_item")
-                and item.get("batch_no")
-            ) or doc.get("purpose") == "Material Receipt":
-                for _ in range(final_qty):
-                    barcode_entries.append(
-                        {
-                            "item_code": item["item_code"],
-                            "item_qty": 1,
-                            "reference_of_manufacturing_entry": doc.get("name"),
-                            "manufacturing_date": doc.get("posting_date"),
-                            "batch": item.get("batch_no"),
-                            "warehouse": item.get("t_warehouse"),
-                        }
-                    )
+            if not ((doc.get("purpose") == "Manufacture" and item.get("is_finished_item") and item.get("batch_no")) 
+                    or doc.get("purpose") == "Material Receipt"):
+                continue
+            
+            item_group = frappe.db.get_value("Item", item["item_code"], "item_group")
+            
+            # ✅ CHECK: Items NOT in allowed_item_groups get multiplier 1 (qty as-is)
+            # Items IN allowed_item_groups get settings.qty multiplier
+            is_in_allowed = item_group in allowed_item_groups
+            
+            if is_in_allowed:
+                # Item IS in allowed groups - use settings.qty multiplier
+                multiplier = settings.qty
+            else:
+                # Item is NOT in allowed groups - use qty as-is
+                multiplier = 1
+            
+            final_qty = int(item.get("qty", 0) * multiplier)
+            
+            # ✅ CREATE BARCODES FOR THIS SPECIFIC ROW
+            row_barcodes = []
+            for _ in range(final_qty):
+                barcode_doc = frappe.new_doc("Barcode Entry")
+                barcode_doc.update({
+                    "item_code": item["item_code"],
+                    "item_qty": 1,
+                    "reference_of_manufacturing_entry": doc.get("name"),
+                    "manufacturing_date": doc.get("posting_date"),
+                    "batch": item.get("batch_no"),
+                    "warehouse": item.get("t_warehouse"),
+                })
+                barcode_doc.insert()
+                row_barcodes.append(barcode_doc.name)
+                barcode_entry_refs.append(barcode_doc.name)
+            
+            # ✅ UPDATE THIS SPECIFIC ROW ONLY using row's unique name
+            if row_barcodes:
+                frappe.db.set_value(
+                    "Stock Entry Detail",
+                    item["name"],  # This is the unique child row name
+                    "custom_barcodes_v1",
+                    "\n".join(row_barcodes),
+                )
 
-        if not barcode_entries:
+        if not barcode_entry_refs:
             frappe.msgprint(_("No valid barcode entries to create."))
             return
 
-        barcode_entry_refs = []
-        for entry in barcode_entries:
-            barcode_doc = frappe.new_doc("Barcode Entry")
-            barcode_doc.update(entry)
-            barcode_doc.insert()
-            barcode_entry_refs.append(barcode_doc.name)
-
-        # Group barcode references per item_code + batch
-        item_batch_map = {}
-        for entry, name in zip(barcode_entries, barcode_entry_refs):
-            key = (entry["item_code"], entry["batch"])
-            item_batch_map.setdefault(key, []).append(name)
-
-        # Update Stock Entry Detail's custom_barcodes_v1 field
-        for (item_code, batch), barcodes in item_batch_map.items():
-            filters = {"parent": doc.get("name"), "item_code": item_code}
-            if batch:
-                filters["batch_no"] = batch
-
-            combined_barcodes = "\n".join(barcodes)
-            frappe.db.set_value(
-                "Stock Entry Detail", filters, "custom_barcodes_v1", combined_barcodes
-            )
-
-        frappe.msgprint("Barcode entries created successfully.")
+        frappe.db.commit()
+        frappe.msgprint(f"Barcode entries created successfully. Total: {len(barcode_entry_refs)}")
         return barcode_entry_refs
 
     except Exception as e:
