@@ -76,32 +76,6 @@ def on_cancel(self, method):
 
 
 def before_save(self, method):
-    if self.items:
-        # Fetch all items with has_barcode in one query
-        item_codes = [row.item_code for row in self.items if row.item_code]
-        if item_codes:
-            items_with_barcode = frappe.db.get_list(
-                "Item",
-                filters={"name": ["in", item_codes], "has_barcode": 1},
-                pluck="name",
-            )
-            items_with_barcode_set = set(items_with_barcode)
-
-            for row in self.items:
-                if not row.item_code or row.item_code not in items_with_barcode_set:
-                    continue
-
-                if not row.custom_barcodes_v1:
-                    frappe.throw(
-                        title="Missing Barcode",
-                        msg=(
-                            f"Barcode is mandatory for item "
-                            f"<b>{row.item_code}</b> "
-                            f"(Row {row.idx}).<br>"
-                            f"Please scan or enter a barcode before saving."
-                        ),
-                    )
-    # run for loop of self.items and check in item doctype has_barocde check and in the custom_barcodes_v1 field has barcode or not
     entry_type = frappe.db.get_value(
         "Stock Entry Type", self.stock_entry_type, "purpose"
     )
@@ -111,6 +85,35 @@ def before_save(self, method):
 
     if entry_type == "Manufacture" and self.from_bom == 1 and self.bom_no:
         calculate_additional_cost(self)
+
+    if entry_type == "Manufacture":
+        return
+
+    # Fetch all items with has_barcode in one query
+    item_codes = [row.item_code for row in self.items if row.item_code]
+    if not item_codes:
+        return
+
+    items_with_barcode_set = set(
+        frappe.db.get_list(
+            "Item",
+            filters={"name": ["in", item_codes], "has_barcode": 1},
+            pluck="name",
+        )
+    )
+
+    for row in self.items:
+        if row.item_code in items_with_barcode_set and not row.custom_barcodes_v1:
+            frappe.throw(
+                title="Missing Barcode",
+                msg=(
+                    f"Barcode is mandatory for item "
+                    f"<b>{row.item_code}</b> "
+                    f"(Row {row.idx}).<br>"
+                    f"Please scan or enter a barcode before saving."
+                ),
+            )
+    
 
 
 def calculate_additional_cost(self):
