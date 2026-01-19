@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-19 18:45:22.396762",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "warehouse",
+  "section_break_yg93",
+  "barcodes",
+  "column_break_jmyq",
+  "box_references"
+ ],
+ "fields": [
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "section_break_yg93",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "barcodes",
+   "fieldtype": "Long Text",
+   "in_list_view": 1,
+   "label": "Barcodes"
+  },
+  {
+   "fieldname": "column_break_jmyq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "box_references",
+   "fieldtype": "Long Text",
+   "in_list_view": 1,
+   "label": "Box References"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-19 19:09:45.869275",
+ "modified_by": "Administrator",
+ "module": "Jisha Customization",
+ "name": "Warehouse Correction Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
