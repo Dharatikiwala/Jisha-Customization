@@ -91,9 +91,10 @@ def execute(filters=None):
 		}
 
 		# Apply condition only if required
-		if not condition_apply or second_balance_qty > 0 or (
-			second_balance_qty < 0 and reorder_level > balance_qty
-		):
+		if condition_apply:
+			if second_balance_qty > 0 and reorder_level > balance_qty:
+				data.append(row)
+		else:
 			data.append(row)
 	
 	return columns, data
