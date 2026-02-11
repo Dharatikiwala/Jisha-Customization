@@ -149,6 +149,9 @@ doc_events = {
 	}
 }
 
+after_migrate = [
+    "jisha_customization.jisha_customization.override.utils.update_box_references"
+]
 # Scheduled Tasks
 # ---------------
 
@@ -253,7 +256,8 @@ fixtures = [
         "Sales Invoice Item-custom_box_creation_reference","Delivery Note-custom_scan_barcodes","Delivery Note Item-custom_box_creation_reference",
         "Delivery Note Item-custom_barcodes","Stock Entry-custom_scan_barcodes","Payment Entry-custom_gets_outstanding_invoices",
         "Payment Entry-custom_gets_outstanding_orders","Stock Entry Detail-custom_box_reference","Stock Entry Detail-custom_barcodes_v1",
-        "Journal Entry Account-custom_is_splitted","Stock Entry Detail-custom_is_created_from_mt_tool","Item-custom_has_barcode"
+        "Journal Entry Account-custom_is_splitted","Stock Entry Detail-custom_is_created_from_mt_tool","Item-custom_has_barcode",
+        "Delivery Note Item-custom_box_creation_reference_long","Sales Invoice Item-custom_box_creation_reference_long"
 	)]]
 
 	},

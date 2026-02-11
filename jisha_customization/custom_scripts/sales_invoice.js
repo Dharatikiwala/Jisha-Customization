@@ -68,8 +68,8 @@ frappe.ui.form.on('Sales Invoice', {
                     // =============== DUPLICATE BOX CHECK ===============
                     if (existingRow) {
 
-                        const existingBoxes = existingRow.custom_box_creation_reference
-                            ? existingRow.custom_box_creation_reference.split("\n")
+                        const existingBoxes = existingRow.custom_box_creation_reference_long
+                            ? existingRow.custom_box_creation_reference_long.split("\n")
                             : [];
 
                         if (existingBoxes.includes(barcode_data.name)) {
@@ -107,15 +107,15 @@ frappe.ui.form.on('Sales Invoice', {
                         existingRow.custom_barcodes = existingBarcodes.join("\n");
 
                         // MERGE BOX REFERENCES
-                        let existingRefs = existingRow.custom_box_creation_reference
-                            ? existingRow.custom_box_creation_reference.split("\n").map(r => r.trim()).filter(Boolean)
+                        let existingRefs = existingRow.custom_box_creation_reference_long
+                            ? existingRow.custom_box_creation_reference_long.split("\n").map(r => r.trim()).filter(Boolean)
                             : [];
 
                         if (!existingRefs.includes(barcode_data.name)) {
                             existingRefs.push(barcode_data.name);
                         }
 
-                        existingRow.custom_box_creation_reference = existingRefs.join("\n");
+                        existingRow.custom_box_creation_reference_long = existingRefs.join("\n");
 
                         frm.refresh_field("items");
                         frm.save();
@@ -133,7 +133,7 @@ frappe.ui.form.on('Sales Invoice', {
                     row.warehouse = first_row.warehouse;
                     row.batch_no = first_row.batch;
                     row.custom_barcodes = barcodes;
-                    row.custom_box_creation_reference = barcode_data.name;
+                    row.custom_box_creation_reference_long = barcode_data.name;
                     row.use_serial_batch_fields = 1;
 
                     row.qty = valid_group

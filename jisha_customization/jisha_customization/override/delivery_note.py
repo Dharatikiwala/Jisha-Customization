@@ -56,22 +56,27 @@ def on_submit(self, method):
                     )
                     frappe.db.set_value("Barcode Entry", barcode, "status", "Delivered")
 
-        for item in self.items:
-            if item.custom_box_creation_reference:
-                if self.is_return:
-                    frappe.db.set_value(
-                        "Box Creation",
-                        item.custom_box_creation_reference,
-                        "returned_delivery_reference",
-                        self.name,
-                    )
-                else:
-                    frappe.db.set_value(
-                        "Box Creation",
-                        item.custom_box_creation_reference,
-                        "reference_of_delivery_note",
-                        self.name,
-                    )
+        boxes_to_update = [
+            box.strip()
+            for row in self.items
+            if row.custom_box_creation_reference_long
+            for box in row.custom_box_creation_reference_long.split("\n")
+        ]
+        for box_name in boxes_to_update:
+            if self.is_return:
+                frappe.db.set_value(
+                    "Box Creation",
+                    box_name,
+                    "returned_delivery_reference",
+                    self.name,
+                )
+            else:
+                frappe.db.set_value(
+                    "Box Creation",
+                    box_name,
+                    "reference_of_delivery_note",
+                    self.name,
+                )
 
 
 def on_cancel(self, method):
@@ -95,19 +100,27 @@ def on_cancel(self, method):
                     )
                     frappe.db.set_value("Barcode Entry", barcode, "status", "Active")
 
-        for item in self.items:
-            if item.custom_box_creation_reference:
-                if self.is_return:
-                    frappe.db.set_value(
-                        "Box Creation",
-                        item.custom_box_creation_reference,
-                        "returned_delivery_reference",
-                        "",
-                    )
-                else:
-                    frappe.db.set_value(
-                        "Box Creation",
-                        item.custom_box_creation_reference,
-                        "reference_of_delivery_note",
-                        "",
-                    )
+        boxes_to_update = [
+            box.strip()
+            for row in self.items
+            if row.custom_box_creation_reference_long
+            for box in row.custom_box_creation_reference_long.split("\n")
+        ]
+
+        for box_name in boxes_to_update:
+
+            if self.is_return:
+                frappe.db.set_value(
+                    "Box Creation",
+                    box_name,
+                    "returned_delivery_reference",
+                    "",
+                )
+            else:
+                frappe.db.set_value(
+                    "Box Creation",
+                    box_name,
+                    "reference_of_delivery_note",
+                    "",
+                )
+
