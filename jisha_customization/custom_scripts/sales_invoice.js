@@ -55,7 +55,7 @@ frappe.ui.form.on('Sales Invoice', {
                     // CHECK EXISTING ROW
                     let existingRow = frm.doc.items.find(
                         item => item.item_code === first_row.item_code &&
-                            item.batch_no === first_row.batch
+                            item.batch_no === first_row.batch && item.warehouse === first_row.warehouse
                     );
 
                     const item_group_res = await frappe.db.get_value("Item", first_row.item_code, "item_group");
@@ -174,7 +174,7 @@ frappe.ui.form.on('Sales Invoice', {
                 // FIND EXISTING ROW
                 let row = frm.doc.items.find(
                     r => r.item_code === barcode_data.item_code &&
-                        r.batch_no === barcode_data.batch
+                        r.batch_no === barcode_data.batch && r.warehouse === barcode_data.warehouse
                 );
 
                 // UPDATE EXISTING ROW
