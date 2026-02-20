@@ -32,9 +32,9 @@
   },
   {
    "default": "0",
-   "depends_on": "enable",
    "fieldname": "is_applied",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Is Applied",
    "read_only": 1
   }
@@ -43,7 +43,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-19 19:27:05.440861",
+ "modified": "2026-02-20 15:44:33.787878",
  "modified_by": "Administrator",
  "module": "Jisha Customization",
  "name": "Warehouse Correction",

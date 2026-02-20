@@ -7,6 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "warehouse",
+  "is_processed",
+  "column_break_jex3",
+  "type",
   "section_break_yg93",
   "barcodes",
   "column_break_jmyq",
@@ -25,27 +28,50 @@
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "eval:doc.type== \"Barcode\"",
    "fieldname": "barcodes",
    "fieldtype": "Long Text",
-   "in_list_view": 1,
-   "label": "Barcodes"
+   "label": "Barcodes",
+   "mandatory_depends_on": "eval:doc.type== \"Barcode\"",
+   "read_only_depends_on": "eval:doc.type== \"Box\""
   },
   {
    "fieldname": "column_break_jmyq",
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:doc.type== \"Box\"",
    "fieldname": "box_references",
    "fieldtype": "Long Text",
+   "label": "Box References",
+   "mandatory_depends_on": "eval:doc.type== \"Box\"",
+   "read_only_depends_on": "eval:doc.type== \"Barcode\""
+  },
+  {
+   "fieldname": "column_break_jex3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Box References"
+   "label": "Type",
+   "options": "Barcode\nBox",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_processed",
+   "fieldtype": "Check",
+   "label": "Is Processed",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-19 19:09:45.869275",
+ "modified": "2026-02-20 15:39:35.509449",
  "modified_by": "Administrator",
  "module": "Jisha Customization",
  "name": "Warehouse Correction Item",
