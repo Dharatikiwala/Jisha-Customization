@@ -274,7 +274,7 @@ frappe.ui.form.on('Stock Entry', {
                     // ---------------------------------------------
                     let existingRow = frm.doc.items.find(item =>
                         item.item_code === first.item_code &&
-                        item.batch_no === first.batch && item.warehouse === first.warehouse
+                        item.batch_no === first.batch && item.s_warehouse === first.warehouse
                     );
 
                     // =================================================================================
@@ -389,7 +389,7 @@ frappe.ui.form.on('Stock Entry', {
 
                 let existingRow = frm.doc.items.find(item =>
                     item.item_code === barcode_data.item_code &&
-                    item.batch_no === barcode_data.batch && item.warehouse === barcode_data.warehouse
+                    item.batch_no === barcode_data.batch && item.s_warehouse === barcode_data.warehouse
                 );
 
                 if (existingRow) {
