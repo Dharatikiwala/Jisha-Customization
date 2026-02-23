@@ -213,7 +213,8 @@ frappe.ui.form.on('Stock Entry', {
                         args: {
                             doctype: "Item Group",
                             filters: { parent_item_group: jisha_setting.item_group },
-                            fields: ["name"]
+                            fields: ["name"],
+                            limit_page_length: 100
                         }
                     }).then(r => {
                         return {
