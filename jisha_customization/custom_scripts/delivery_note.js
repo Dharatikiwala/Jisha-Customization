@@ -50,7 +50,8 @@ frappe.ui.form.on('Delivery Note', {
                         args: {
                             doctype: "Item Group",
                             filters: { parent_item_group: jisha_group },
-                            fields: ["name"]
+                            fields: ["name"],
+                            limit_page_length: 100
                         }
                     });
                     const jisha_subgroups = subgroup_res.message.map(g => g.name);
