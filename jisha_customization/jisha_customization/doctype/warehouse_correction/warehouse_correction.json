@@ -1,30 +1,50 @@
 {
  "actions": [],
- "allow_rename": 1,
+ "allow_rename": 0,
+ "autoname": "WC-.YYYY.-.####",
  "creation": "2026-01-19 18:43:37.363293",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "enable",
+  "corrected_by",
+  "corrected_by_name",
+  "corrected_at",
   "is_applied",
+  "correction_status",
+  "column_break_info",
   "section_break_vepg",
   "items"
  ],
  "fields": [
   {
-   "allow_in_quick_entry": 1,
+   "fieldname": "corrected_by",
+   "fieldtype": "Link",
+   "label": "Corrected By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "corrected_by_name",
+   "fieldtype": "Data",
+   "label": "Corrected By Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_info",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "corrected_at",
+   "fieldtype": "Datetime",
+   "label": "Corrected At",
+   "read_only": 1
+  },
+  {
    "fieldname": "section_break_vepg",
    "fieldtype": "Section Break"
   },
   {
-   "default": "0",
-   "fieldname": "enable",
-   "fieldtype": "Check",
-   "label": "Enable"
-  },
-  {
    "allow_bulk_edit": 1,
-   "depends_on": "enable",
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Items",
@@ -37,11 +57,18 @@
    "hidden": 1,
    "label": "Is Applied",
    "read_only": 1
+  },
+  {
+   "fieldname": "correction_status",
+   "fieldtype": "Select",
+   "label": "Correction Status",
+   "options": "\nSuccess\nError",
+   "read_only": 1,
+   "hidden": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "issingle": 1,
  "links": [],
  "modified": "2026-02-20 15:44:33.787878",
  "modified_by": "Administrator",
@@ -51,11 +78,31 @@
  "permissions": [
   {
    "create": 1,
-   "delete": 1,
+   "delete": 0,
    "email": 1,
    "print": 1,
    "read": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Stock Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Stock User",
    "share": 1,
    "write": 1
   }
