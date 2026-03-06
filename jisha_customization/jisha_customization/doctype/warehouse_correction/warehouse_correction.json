@@ -48,7 +48,8 @@
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Items",
-   "options": "Warehouse Correction Item"
+   "options": "Warehouse Correction Item",
+   "read_only_depends_on": "eval:doc.is_applied"
   },
   {
    "default": "0",

@@ -35,16 +35,24 @@ frappe.ui.form.on("Warehouse Correction", {
 						frappe.call({
 							method: "jisha_customization.jisha_customization.doctype.warehouse_correction.warehouse_correction.run_warehouse_correction",
 							args: { docname: frm.doc.name },
-							freeze: true,
-							freeze_message: __("Applying warehouse correction..."),
 							callback(r) {
 								if (!r.exc) {
-									frappe.msgprint({
-										title: __("Success"),
-										message: r.message.message,
-										indicator: "green",
+									frappe.show_alert({
+										message: __(r.message.message),
+										indicator: "blue",
+									}, 10);
+
+									frappe.realtime.on("warehouse_correction_done", function handler(data) {
+										if (data.docname !== frm.doc.name) return;
+										frappe.realtime.off("warehouse_correction_done", handler);
+
+										frappe.msgprint({
+											title: __("Warehouse Correction Complete"),
+											message: data.message,
+											indicator: data.status === "Success" ? "green" : "red",
+										});
+										frm.reload_doc();
 									});
-									frm.reload_doc();
 								}
 							}
 						});

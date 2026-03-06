@@ -12,31 +12,42 @@ class WarehouseCorrection(Document):
 		if self.is_applied:
 			frappe.throw(_("This record has been applied and cannot be edited."))
 
-	def before_trash(self):
-		frappe.throw(_("Warehouse Correction records cannot be deleted."))
-
 
 @frappe.whitelist()
 def run_warehouse_correction(docname):
-	"""
-	Executes warehouse correction.
-	Processes only unprocessed rows.
-	"""
+	"""Enqueues the warehouse correction and notifies via realtime when done."""
+	user = frappe.session.user
+	frappe.enqueue(
+		"jisha_customization.jisha_customization.doctype.warehouse_correction.warehouse_correction._apply_correction",
+		docname=docname,
+		user=user,
+		queue="long",
+		timeout=600,
+		now=frappe.flags.in_test,
+	)
+	return {"message": _("Warehouse correction has been queued. You will be notified once it's done.")}
 
+
+def _apply_correction(docname, user):
+	"""Background job: applies warehouse correction using bulk SQL updates."""
 	doc = frappe.get_doc("Warehouse Correction", docname)
 
 	if not doc.items:
-		frappe.throw(_("No Warehouse Correction Items found."))
+		frappe.publish_realtime(
+			"warehouse_correction_done",
+			{"docname": docname, "status": "Error", "message": _("No Warehouse Correction Items found.")},
+			user=user,
+		)
+		return
 
 	barcode_updated = 0
 	box_updated = 0
 	error_count = 0
 	error_logs = []
-	processed_rows = 0
+	processed_row_names = []
 
 	for item in doc.items:
 
-		# Skip already processed rows
 		if item.is_processed:
 			continue
 
@@ -60,22 +71,21 @@ def run_warehouse_correction(docname):
 				error_count += 1
 				continue
 
-			for barcode in barcodes:
+			existing = set(frappe.db.get_all(
+				"Barcode Entry", filters={"name": ["in", barcodes]}, pluck="name"
+			))
+			missing = set(barcodes) - existing
+			for m in missing:
+				error_logs.append(f"Barcode Entry not found: {m}")
+			error_count += len(missing)
 
-				if not frappe.db.exists("Barcode Entry", barcode):
-					error_logs.append(f"Barcode Entry not found: {barcode}")
-					error_count += 1
-					continue
-
-				frappe.db.set_value(
-					"Barcode Entry",
-					barcode,
-					"warehouse",
-					warehouse,
-					update_modified=False
+			if existing:
+				ph = ", ".join(["%s"] * len(existing))
+				frappe.db.sql(
+					f"UPDATE `tabBarcode Entry` SET warehouse=%s WHERE name IN ({ph})",
+					[warehouse] + list(existing),
 				)
-
-				barcode_updated += 1
+				barcode_updated += len(existing)
 				row_updated = True
 
 		# =====================================================
@@ -88,110 +98,96 @@ def run_warehouse_correction(docname):
 				error_count += 1
 				continue
 
-			for box_ref in box_refs:
+			existing_boxes = set(frappe.db.get_all(
+				"Box Creation", filters={"name": ["in", box_refs]}, pluck="name"
+			))
+			missing_boxes = set(box_refs) - existing_boxes
+			for m in missing_boxes:
+				error_logs.append(f"Box Creation not found: {m}")
+			error_count += len(missing_boxes)
 
-				if not frappe.db.exists("Box Creation", box_ref):
-					error_logs.append(f"Box Creation not found: {box_ref}")
-					error_count += 1
-					continue
-
+			if existing_boxes:
 				child_rows = frappe.db.get_all(
 					"Barcode Box",
-					filters={
-						"parent": box_ref,
-						"parenttype": "Box Creation"
-					},
-					fields=["name", "barcode_reference"]
+					filters={"parent": ["in", list(existing_boxes)], "parenttype": "Box Creation"},
+					fields=["name", "barcode_reference"],
 				)
 
 				if not child_rows:
-					error_logs.append(
-						f"No Barcode rows found in Box Creation '{box_ref}'"
-					)
+					error_logs.append(f"No Barcode rows found in Boxes: {', '.join(existing_boxes)}")
 					error_count += 1
-					continue
+				else:
+					child_names = [r.name for r in child_rows]
+					barcode_refs = [r.barcode_reference for r in child_rows if r.barcode_reference]
 
-				for row in child_rows:
-
-					frappe.db.set_value(
-						"Barcode Box",
-						row.name,
-						"warehouse",
-						warehouse,
-						update_modified=False
+					ph = ", ".join(["%s"] * len(child_names))
+					frappe.db.sql(
+						f"UPDATE `tabBarcode Box` SET warehouse=%s WHERE name IN ({ph})",
+						[warehouse] + child_names,
 					)
 
-					if frappe.db.exists("Barcode Entry", row.barcode_reference):
-						frappe.db.set_value(
-							"Barcode Entry",
-							row.barcode_reference,
-							"warehouse",
-							warehouse,
-							update_modified=False
+					if barcode_refs:
+						ph2 = ", ".join(["%s"] * len(barcode_refs))
+						frappe.db.sql(
+							f"UPDATE `tabBarcode Entry` SET warehouse=%s WHERE name IN ({ph2})",
+							[warehouse] + barcode_refs,
 						)
 
-					box_updated += 1
+					box_updated += len(child_rows)
 					row_updated = True
 
 		else:
 			error_logs.append(f"Row {item.idx}: Invalid type '{row_type}'")
 			error_count += 1
 
-		# Mark row processed only if update happened
 		if row_updated:
-			frappe.db.set_value(
-				item.doctype,
-				item.name,
-				"is_processed",
-				1,
-				update_modified=False
-			)
-			processed_rows += 1
+			processed_row_names.append(item.name)
 
-	# Log errors once
-	if error_logs:
-		frappe.log_error(
-			title="Warehouse Correction Errors",
-			message="\n".join(error_logs)
+	# Bulk-mark rows as processed
+	if processed_row_names:
+		ph = ", ".join(["%s"] * len(processed_row_names))
+		frappe.db.sql(
+			f"UPDATE `tabWarehouse Correction Item` SET is_processed=1 WHERE name IN ({ph})",
+			processed_row_names,
 		)
 
-	# Lock the record permanently
-	corrected_by = frappe.session.user
-	corrected_by_name = frappe.db.get_value("User", corrected_by, "full_name") or corrected_by
+	if error_logs:
+		frappe.log_error(title="Warehouse Correction Errors", message="\n".join(error_logs))
+
 	correction_status = "Error" if error_count > 0 else "Success"
+	corrected_by_name = frappe.db.get_value("User", user, "full_name") or user
 
 	frappe.db.set_value(
 		"Warehouse Correction",
 		docname,
 		{
 			"is_applied": 1,
-			"corrected_by": corrected_by,
+			"corrected_by": user,
 			"corrected_by_name": corrected_by_name,
 			"corrected_at": frappe.utils.now_datetime(),
 			"correction_status": correction_status,
 		},
-		update_modified=False
+		update_modified=False,
 	)
 
-	frappe.db.commit()
+	processed_rows = len(processed_row_names)
+	message = (
+		f"Warehouse Correction Status.<br><br>"
+		f"<b>Rows Processed:</b> {processed_rows}<br>"
+		f"<b>Barcodes Updated:</b> {barcode_updated}<br>"
+		f"<b>Box Rows Updated:</b> {box_updated}<br>"
+		f"<b>Errors:</b> {error_count}"
+	)
 
-	return {
-		"message": _(
-			f"Warehouse Correction Status.<br><br>"
-			f"<b>Rows Processed:</b> {processed_rows}<br>"
-			f"<b>Barcodes Updated:</b> {barcode_updated}<br>"
-			f"<b>Box Rows Updated:</b> {box_updated}<br>"
-			f"<b>Errors:</b> {error_count}"
-		)
-	}
+	frappe.publish_realtime(
+		"warehouse_correction_done",
+		{"docname": docname, "status": correction_status, "message": message},
+		user=user,
+	)
 
 
 def _parse_list(value):
 	if not value:
 		return []
 
-	return [
-		v.strip()
-		for v in value.replace(",", "\n").split("\n")
-		if v.strip()
-	]
+	return [v.strip() for v in value.replace(",", "\n").split("\n") if v.strip()]
