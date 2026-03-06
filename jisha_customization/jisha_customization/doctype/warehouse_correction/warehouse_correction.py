@@ -183,6 +183,7 @@ def _apply_correction(docname, user):
 		"warehouse_correction_done",
 		{"docname": docname, "status": correction_status, "message": message},
 		user=user,
+  		after_commit=True
 	)
 
 

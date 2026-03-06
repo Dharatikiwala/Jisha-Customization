@@ -3,6 +3,7 @@
 
 frappe.ui.form.on("Warehouse Correction", {
 	refresh(frm) {
+		frm.set_intro("");
 
 		if (frm.doc.is_applied) {
 			frm.disable_form();
