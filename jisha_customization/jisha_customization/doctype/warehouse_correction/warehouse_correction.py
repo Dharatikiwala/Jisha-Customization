@@ -70,6 +70,8 @@ def _apply_correction(docname, user):
 			box_refs = _parse_list(item.box_references)
 
 			if not warehouse:
+				error_logs.append(f"Row {item.idx}: No warehouse specified.")
+				error_count += 1
 				continue
 
 			# Validate warehouse exists in the DB. The UI Link field enforces this
@@ -91,20 +93,14 @@ def _apply_correction(docname, user):
 					error_count += 1
 					continue
 
-				existing = set(frappe.db.get_all(
-					"Barcode Entry", filters={"name": ["in", barcodes]}, pluck="name"
-				))
+				existing = _chunked_get_all("Barcode Entry", barcodes)
 				missing = set(barcodes) - existing
 				for m in missing:
 					error_logs.append(f"Barcode Entry not found: {m}")
 				error_count += len(missing)
 
 				if existing:
-					ph = ", ".join(["%s"] * len(existing))
-					frappe.db.sql(
-						f"UPDATE `tabBarcode Entry` SET warehouse=%s WHERE name IN ({ph})",
-						[warehouse] + list(existing),
-					)
+					_chunked_sql_update("tabBarcode Entry", "warehouse", warehouse, list(existing))
 					barcode_updated += len(existing)
 					row_updated = True
 
@@ -118,9 +114,7 @@ def _apply_correction(docname, user):
 					error_count += 1
 					continue
 
-				existing_boxes = set(frappe.db.get_all(
-					"Box Creation", filters={"name": ["in", box_refs]}, pluck="name"
-				))
+				existing_boxes = _chunked_get_all("Box Creation", box_refs)
 				missing_boxes = set(box_refs) - existing_boxes
 				for m in missing_boxes:
 					error_logs.append(f"Box Creation not found: {m}")
@@ -140,18 +134,10 @@ def _apply_correction(docname, user):
 						child_names = [r.name for r in child_rows]
 						barcode_refs = [r.barcode_reference for r in child_rows if r.barcode_reference]
 
-						ph = ", ".join(["%s"] * len(child_names))
-						frappe.db.sql(
-							f"UPDATE `tabBarcode Box` SET warehouse=%s WHERE name IN ({ph})",
-							[warehouse] + child_names,
-						)
+						_chunked_sql_update("tabBarcode Box", "warehouse", warehouse, child_names)
 
 						if barcode_refs:
-							ph2 = ", ".join(["%s"] * len(barcode_refs))
-							frappe.db.sql(
-								f"UPDATE `tabBarcode Entry` SET warehouse=%s WHERE name IN ({ph2})",
-								[warehouse] + barcode_refs,
-							)
+							_chunked_sql_update("tabBarcode Entry", "warehouse", warehouse, barcode_refs)
 
 						box_updated += len(child_rows)
 						row_updated = True
@@ -165,11 +151,7 @@ def _apply_correction(docname, user):
 
 		# Bulk-mark rows as processed
 		if processed_row_names:
-			ph = ", ".join(["%s"] * len(processed_row_names))
-			frappe.db.sql(
-				f"UPDATE `tabWarehouse Correction Item` SET is_processed=1 WHERE name IN ({ph})",
-				processed_row_names,
-			)
+			_chunked_sql_update("tabWarehouse Correction Item", "is_processed", 1, processed_row_names)
 
 		if error_logs:
 			frappe.log_error(title="Warehouse Correction Errors", message="\n".join(error_logs))
@@ -214,6 +196,26 @@ def _apply_correction(docname, user):
 			"warehouse_correction_done",
 			{"docname": docname, "status": "Error", "message": _("An unexpected error occurred. Please check the Error Log.")},
 			user=user,
+		)
+
+
+def _chunked_get_all(doctype, names, chunk_size=500):
+	"""Fetch existing names in chunks to avoid large IN queries at scale."""
+	result = set()
+	for i in range(0, len(names), chunk_size):
+		chunk = names[i:i + chunk_size]
+		result.update(frappe.db.get_all(doctype, filters={"name": ["in", chunk]}, pluck="name"))
+	return result
+
+
+def _chunked_sql_update(table, field, value, names, chunk_size=500):
+	"""Run UPDATE SET field=value WHERE name IN (...) in chunks to avoid large IN queries at scale."""
+	for i in range(0, len(names), chunk_size):
+		chunk = names[i:i + chunk_size]
+		ph = ", ".join(["%s"] * len(chunk))
+		frappe.db.sql(
+			f"UPDATE `{table}` SET `{field}`=%s WHERE name IN ({ph})",
+			[value] + chunk,
 		)
 
 
