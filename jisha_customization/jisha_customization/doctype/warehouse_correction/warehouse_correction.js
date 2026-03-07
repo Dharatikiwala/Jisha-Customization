@@ -46,7 +46,7 @@ frappe.ui.form.on("Warehouse Correction", {
 									let handled = false;
 									let poll_interval = null;
 									let poll_count = 0;
-									const max_polls = 10;
+									const max_polls = 30;
 
 									const handle_done = (status, summary) => {
 										if (handled) return;

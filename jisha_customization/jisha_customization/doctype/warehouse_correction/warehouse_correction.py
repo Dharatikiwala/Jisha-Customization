@@ -32,7 +32,11 @@ def run_warehouse_correction(docname):
 def _apply_correction(docname, user):
 	"""Background job: applies warehouse correction using bulk SQL updates."""
 	try:
-		if frappe.db.get_value("Warehouse Correction", docname, "is_applied"):
+		frappe.db.sql(
+			"UPDATE `tabWarehouse Correction` SET is_processing=1 WHERE name=%s AND is_processing=0 AND is_applied=0",
+			docname,
+		)
+		if not frappe.db.sql("SELECT ROW_COUNT()")[0][0]:
 			return
 
 		doc = frappe.get_doc("Warehouse Correction", docname)
@@ -176,6 +180,7 @@ def _apply_correction(docname, user):
 			docname,
 			{
 				"is_applied": 1,
+				"is_processing": 0,
 				"corrected_by": user,
 				"corrected_by_name": corrected_by_name,
 				"corrected_at": frappe.utils.now_datetime(),
@@ -193,7 +198,7 @@ def _apply_correction(docname, user):
 
 	except Exception:
 		frappe.log_error(title="Warehouse Correction Failed", message=frappe.get_traceback())
-		frappe.db.set_value("Warehouse Correction", docname, {"is_applied": 1, "status": "Error"}, update_modified=False)
+		frappe.db.set_value("Warehouse Correction", docname, {"is_applied": 1, "is_processing": 0, "status": "Error"}, update_modified=False)
 		frappe.publish_realtime(
 			"warehouse_correction_done",
 			{"docname": docname, "status": "Error", "message": _("An unexpected error occurred. Please check the Error Log.")},

@@ -10,6 +10,7 @@
   "corrected_by_name",
   "corrected_at",
   "is_applied",
+  "is_processing",
   "correction_summary",
   "status",
   "column_break_info",
@@ -58,6 +59,14 @@
    "fieldtype": "Check",
    "hidden": 1,
    "label": "Is Applied",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_processing",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Is Processing",
    "read_only": 1
   },
   {
