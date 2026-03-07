@@ -11,6 +11,8 @@
   "corrected_at",
   "is_applied",
   "correction_status",
+  "correction_summary",
+  "status",
   "column_break_info",
   "section_break_vepg",
   "items"
@@ -66,6 +68,22 @@
    "options": "\nSuccess\nError",
    "read_only": 1,
    "hidden": 1
+  },
+  {
+   "fieldname": "correction_summary",
+   "fieldtype": "Small Text",
+   "label": "Correction Summary",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Status",
+   "options": "\nDraft\nSuccess\nError",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -112,5 +130,9 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [
+  {"color": "Yellow", "title": "Draft"},
+  {"color": "Green", "title": "Success"},
+  {"color": "Red", "title": "Error"}
+ ]
 }

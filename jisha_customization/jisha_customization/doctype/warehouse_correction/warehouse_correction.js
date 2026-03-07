@@ -15,6 +15,8 @@ frappe.ui.form.on("Warehouse Correction", {
 			return;
 		}
 
+		frm.page.set_indicator(__("Draft"), "yellow");
+
 		if (!frm.is_new()) {
 			frm.set_intro(__("Data saved! Click on 'Apply Warehouse Correction' to apply correction."), "yellow");
 		}
@@ -43,17 +45,56 @@ frappe.ui.form.on("Warehouse Correction", {
 										indicator: "blue",
 									}, 10);
 
-									frappe.realtime.on("warehouse_correction_done", function handler(data) {
-										if (data.docname !== frm.doc.name) return;
-										frappe.realtime.off("warehouse_correction_done", handler);
+									let handled = false;
+									let poll_interval = null;
+									let poll_count = 0;
+									const max_polls = 10;
+
+									const handle_done = (status, summary) => {
+										if (handled) return;
+										handled = true;
+
+										clearInterval(poll_interval);
+										frappe.realtime.off("warehouse_correction_done", rt_handler);
 
 										frappe.msgprint({
 											title: __("Warehouse Correction Complete"),
-											message: data.message,
-											indicator: data.status === "Success" ? "green" : "red",
+											message: summary,
+											indicator: status === "Success" ? "green" : "red",
 										});
 										frm.reload_doc();
-									});
+									};
+
+									const rt_handler = (data) => {
+										if (data.docname !== frm.doc.name) return;
+										handle_done(data.status, data.message);
+									};
+
+									frappe.realtime.on("warehouse_correction_done", rt_handler);
+
+									poll_interval = setInterval(() => {
+										poll_count++;
+
+										if (poll_count > max_polls) {
+											clearInterval(poll_interval);
+											frappe.realtime.off("warehouse_correction_done", rt_handler);
+											frappe.show_alert({
+												message: __("Warehouse Correction is taking longer than expected. Please refresh to check status."),
+												indicator: "orange",
+											}, 15);
+											return;
+										}
+
+										frappe.db.get_value(
+											"Warehouse Correction",
+											frm.doc.name,
+											["is_applied", "correction_status", "correction_summary"]
+										).then(r => {
+											if (r.message?.is_applied) {
+												handle_done(r.message.correction_status, r.message.correction_summary);
+											}
+										});
+									}, 1000);
 								}
 							}
 						});
