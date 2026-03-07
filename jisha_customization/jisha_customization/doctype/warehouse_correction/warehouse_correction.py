@@ -32,6 +32,9 @@ def run_warehouse_correction(docname):
 def _apply_correction(docname, user):
 	"""Background job: applies warehouse correction using bulk SQL updates."""
 	try:
+		if frappe.db.get_value("Warehouse Correction", docname, "is_applied"):
+			return
+
 		doc = frappe.get_doc("Warehouse Correction", docname)
 
 		if not doc.items:

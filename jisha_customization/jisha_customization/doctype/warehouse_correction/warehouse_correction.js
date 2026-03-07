@@ -19,7 +19,8 @@ frappe.ui.form.on("Warehouse Correction", {
 		const has_unprocessed = frm.doc.items.some(d => !d.is_processed);
 
 		if (has_unprocessed) {
-			frm.add_custom_button(__("Apply Warehouse Correction"), () => {
+			const btn = frm.add_custom_button(__("Apply Warehouse Correction"), () => {
+				btn.prop("disabled", true);
 
 				frappe.confirm(
 					__(
@@ -32,6 +33,10 @@ frappe.ui.form.on("Warehouse Correction", {
 							method: "jisha_customization.jisha_customization.doctype.warehouse_correction.warehouse_correction.run_warehouse_correction",
 							args: { docname: frm.doc.name },
 							callback(r) {
+								if (r.exc) {
+									btn.prop("disabled", false);
+									return;
+								}
 								if (!r.exc) {
 									frappe.show_alert({
 										message: __(r.message.message),
@@ -91,6 +96,9 @@ frappe.ui.form.on("Warehouse Correction", {
 								}
 							}
 						});
+					},
+					() => {
+						btn.prop("disabled", false);
 					}
 				);
 
