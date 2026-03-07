@@ -17,6 +17,10 @@ class WarehouseCorrection(Document):
 @frappe.whitelist()
 def run_warehouse_correction(docname):
 	"""Enqueues the warehouse correction and notifies via realtime when done."""
+	# Ensure the caller has write access to this specific document.
+	# @frappe.whitelist() alone only verifies the user is logged in.
+	frappe.has_permission("Warehouse Correction", "write", docname, throw=True)
+
 	user = frappe.session.user
 	frappe.enqueue(
 		"jisha_customization.jisha_customization.doctype.warehouse_correction.warehouse_correction._apply_correction",
@@ -66,6 +70,13 @@ def _apply_correction(docname, user):
 			box_refs = _parse_list(item.box_references)
 
 			if not warehouse:
+				continue
+
+			# Validate warehouse exists in the DB. The UI Link field enforces this
+			# on form save, but the API can be called directly with arbitrary values.
+			if not frappe.db.exists("Warehouse", warehouse):
+				error_logs.append(f"Row {item.idx}: Warehouse '{warehouse}' does not exist.")
+				error_count += 1
 				continue
 
 			row_updated = False
