@@ -7,15 +7,8 @@ frappe.ui.form.on("Warehouse Correction", {
 
 		if (frm.doc.is_applied) {
 			frm.disable_form();
-
-			if (frm.doc.correction_status) {
-				const color = frm.doc.correction_status === "Success" ? "green" : "red";
-				frm.page.set_indicator(__(frm.doc.correction_status), color);
-			}
 			return;
 		}
-
-		frm.page.set_indicator(__("Draft"), "yellow");
 
 		if (!frm.is_new()) {
 			frm.set_intro(__("Data saved! Click on 'Apply Warehouse Correction' to apply correction."), "yellow");
@@ -88,10 +81,10 @@ frappe.ui.form.on("Warehouse Correction", {
 										frappe.db.get_value(
 											"Warehouse Correction",
 											frm.doc.name,
-											["is_applied", "correction_status", "correction_summary"]
+											["is_applied", "status", "correction_summary"]
 										).then(r => {
 											if (r.message?.is_applied) {
-												handle_done(r.message.correction_status, r.message.correction_summary);
+												handle_done(r.message.status, r.message.correction_summary);
 											}
 										});
 									}, 1000);

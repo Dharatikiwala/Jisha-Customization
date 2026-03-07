@@ -10,7 +10,6 @@
   "corrected_by_name",
   "corrected_at",
   "is_applied",
-  "correction_status",
   "correction_summary",
   "status",
   "column_break_info",
@@ -62,14 +61,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "correction_status",
-   "fieldtype": "Select",
-   "label": "Correction Status",
-   "options": "\nSuccess\nError",
-   "read_only": 1,
-   "hidden": 1
-  },
-  {
    "fieldname": "correction_summary",
    "fieldtype": "Small Text",
    "label": "Correction Summary",
@@ -89,7 +80,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-20 15:44:33.787878",
+ "modified": "2026-03-07 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Jisha Customization",
  "name": "Warehouse Correction",
@@ -131,7 +122,7 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [
-  {"color": "Yellow", "title": "Draft"},
+  {"color": "Blue", "title": "Draft"},
   {"color": "Green", "title": "Success"},
   {"color": "Red", "title": "Error"}
  ]
