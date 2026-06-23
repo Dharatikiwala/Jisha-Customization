@@ -5,3 +5,4 @@
 [post_model_sync]
 jisha_customization.patches.update_barcodes_data
 jisha_customization.patches.fix_mismatch_warehouse
+jisha_customization.patches.stock_audit_item
