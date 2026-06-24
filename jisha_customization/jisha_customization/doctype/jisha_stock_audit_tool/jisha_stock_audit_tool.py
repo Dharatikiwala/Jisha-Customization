@@ -251,49 +251,32 @@ def get_batch_valuation_rate(item_code, warehouse, batch_no):
 		return 0.0
 
 	from frappe.utils import flt
+	from erpnext.stock.report.batch_wise_balance_history.batch_wise_balance_history import get_stock_ledger_entries
 
-	# 1. Fetch stock ledger entries with batch_no directly (non-bundle or legacy)
-	sle_entries = frappe.db.sql("""
-		SELECT
-			SUM(actual_qty) AS qty,
-			SUM(stock_value_difference) AS val_diff
-		FROM
-			`tabStock Ledger Entry`
-		WHERE
-			item_code = %s
-			AND warehouse = %s
-			AND batch_no IN %s
-			AND docstatus < 2
-			AND is_cancelled = 0
-	""", (item_code, warehouse, batches), as_dict=True)
+	today = frappe.utils.today()
+	company = frappe.db.get_value("Warehouse", warehouse, "company")
 
-	# 2. Fetch bundle-based entries (serial and batch entry joined with stock ledger entry)
-	bundle_entries = frappe.db.sql("""
-		SELECT
-			SUM(sbe.qty) AS qty,
-			SUM(sbe.stock_value_difference) AS val_diff
-		FROM
-			`tabStock Ledger Entry` sle
-		INNER JOIN
-			`tabSerial and Batch Entry` sbe ON sbe.parent = sle.serial_and_batch_bundle
-		WHERE
-			sle.item_code = %s
-			AND sle.warehouse = %s
-			AND sbe.batch_no IN %s
-			AND sle.docstatus < 2
-			AND sle.is_cancelled = 0
-	""", (item_code, warehouse, batches), as_dict=True)
+	filters = frappe._dict({
+		"from_date": today,
+		"to_date": today,
+		"item_code": item_code,
+		"warehouse": warehouse,
+		"company": company
+	})
+
+	try:
+		entries = get_stock_ledger_entries(filters)
+	except Exception as e:
+		frappe.log_error(f"Error fetching stock ledger entries for batch: {str(e)}", "Jisha Stock Audit Tool")
+		entries = []
 
 	total_qty = 0.0
 	total_val_diff = 0.0
 
-	if sle_entries and sle_entries[0].qty:
-		total_qty += flt(sle_entries[0].qty)
-		total_val_diff += flt(sle_entries[0].val_diff)
-
-	if bundle_entries and bundle_entries[0].qty:
-		total_qty += flt(bundle_entries[0].qty)
-		total_val_diff += flt(bundle_entries[0].val_diff)
+	for d in entries:
+		if d.get("batch_no") and d.get("batch_no").strip() in batches:
+			total_qty += flt(d.get("actual_qty"))
+			total_val_diff += flt(d.get("stock_value_difference"))
 
 	if total_qty > 0:
 		return flt(total_val_diff / total_qty)
