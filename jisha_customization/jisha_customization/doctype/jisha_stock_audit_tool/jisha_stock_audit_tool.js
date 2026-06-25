@@ -239,7 +239,9 @@ frappe.ui.form.on("Jisha Stock Audit Tool", {
                             // ✅ Clear scan field
                             frm.set_value("scan_barcode", "");
                             frm.refresh_field("items");
-                            frm.save();
+                            update_batch_valuation_rate(frm, row, function () {
+                                frm.save();
+                            });
                         }
 
 
@@ -348,7 +350,9 @@ frappe.ui.form.on("Jisha Stock Audit Tool", {
                             // ✅ Clear scan field and refresh
                             frm.set_value("scan_barcode", "");
                             frm.refresh_field("items");
-                            frm.save();
+                            update_batch_valuation_rate(frm, row, function () {
+                                frm.save();
+                            });
                         }
 
                     }
@@ -391,7 +395,7 @@ function clear_all_fields(frm) {
 }
 
 
-function update_batch_valuation_rate(frm, row) {
+function update_batch_valuation_rate(frm, row, callback) {
     if (row.batch && row.item_code && frm.doc.warehouse) {
         frappe.call({
             method: "jisha_customization.jisha_customization.doctype.jisha_stock_audit_tool.jisha_stock_audit_tool.get_batch_valuation_rate",
@@ -400,20 +404,22 @@ function update_batch_valuation_rate(frm, row) {
                 warehouse: frm.doc.warehouse,
                 batch_no: row.batch
             },
-            callback: function(r) {
+            callback: function (r) {
                 if (r.message !== undefined) {
                     frappe.model.set_value(row.doctype, row.name, "batch_valuation_rate", r.message);
                 }
+                if (callback) callback();
             }
         });
     } else {
         frappe.model.set_value(row.doctype, row.name, "batch_valuation_rate", 0);
+        if (callback) callback();
     }
 }
 
 
 frappe.ui.form.on("Jisha Stock Audit Tool Item", {
-    batch: function(frm, cdt, cdn) {
+    batch: function (frm, cdt, cdn) {
         let row = frappe.get_doc(cdt, cdn);
         update_batch_valuation_rate(frm, row);
     }
